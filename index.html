@@ -541,6 +541,17 @@
             background: radial-gradient(ellipse at center, rgba(50, 205, 50, 0.05) 0%, transparent 70%);
         }
 
+        .current-weather-icon {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .current-weather-icon .weather-icon-animated {
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5));
+        }
+
         .temp-main {
             font-size: 4rem;
             font-weight: 700;
@@ -758,6 +769,23 @@
         .hour-item .icon {
             font-size: 1.2rem;
             margin: 5px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Animated Weather Icons */
+        .weather-icon-animated {
+            filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
+            transition: transform 0.3s ease;
+        }
+
+        .hour-item:hover .weather-icon-animated {
+            transform: scale(1.15);
+        }
+
+        .daily-item .weather-icon-animated {
+            filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.4));
         }
 
         .hour-item .temp {
@@ -811,6 +839,9 @@
         .day-item .icon {
             font-size: 1.5rem;
             margin-bottom: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .day-item .temps {
@@ -956,6 +987,87 @@
         .severity-extreme { background: var(--accent-red); color: #fff; }
         .severity-high { background: var(--accent-amber); color: #1a1a0a; }
         .severity-moderate { background: var(--accent-leaf); color: #fff; }
+
+        /* Experimental Accumulation Timeline */
+        .accum-timeline-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-dim);
+        }
+
+        .accum-timeline-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .exp-badge {
+            background: linear-gradient(135deg, #9d00ff 0%, #6b00b3 100%);
+            color: #fff;
+            font-size: 0.5rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .accum-timeline-title {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        .accum-timeline {
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .accum-hour {
+            min-width: 50px;
+            flex-shrink: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-dim);
+            border-radius: 6px;
+            padding: 8px 4px;
+            text-align: center;
+            font-size: 0.5rem;
+        }
+
+        .accum-hour.active {
+            border-color: var(--accent-leaf);
+            background: rgba(255, 20, 147, 0.1);
+        }
+
+        .accum-hour-time {
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .accum-hour-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .accum-hour-bar {
+            height: 4px;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .accum-hour-bar.snow { background: var(--accent-cyan); }
+        .accum-hour-bar.ice { background: var(--accent-red); }
+        .accum-hour-bar.sleet { background: var(--accent-amber); }
+
+        .accum-hour-total {
+            font-size: 0.55rem;
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-top: 4px;
+        }
 
         /* Ice Melt Prediction Panel */
         .melt-panel {
@@ -1263,6 +1375,56 @@
             background: rgba(32, 178, 170, 0.1);
             border-color: var(--accent-cyan);
             color: var(--accent-cyan);
+        }
+
+        /* Model Card Grid */
+        .model-card {
+            display: block;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-dim);
+            border-radius: 6px;
+            overflow: hidden;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .model-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(32, 178, 170, 0.2);
+        }
+
+        .model-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 8px;
+            background: var(--bg-panel-header);
+            font-size: 0.55rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .model-badge {
+            background: var(--bg-void);
+            color: var(--text-muted);
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.45rem;
+            font-weight: 500;
+        }
+
+        .model-badge.official {
+            background: rgba(50, 205, 50, 0.2);
+            color: var(--accent-leaf);
+        }
+
+        .model-card img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            background: #0a0a0a;
+            display: block;
         }
 
         /* Webcam Panel */
@@ -3512,6 +3674,7 @@
             </div>
             <div class="panel-content">
                 <div class="temp-display">
+                    <div class="current-weather-icon" id="current-weather-icon"></div>
                     <div class="temp-main"><span id="current-temp">--</span><span class="unit">°F</span></div>
                     <div class="temp-feels">FEELS LIKE <span id="feels-like">--°F</span></div>
                 </div>
@@ -3552,13 +3715,13 @@
             </div>
             <div class="panel-content">
                 <div class="forecast-tabs">
-                    <button class="forecast-tab active" onclick="switchForecastView('hourly', this)">HOURLY</button>
-                    <button class="forecast-tab" onclick="switchForecastView('daily', this)">DAILY</button>
+                    <button class="forecast-tab active" onclick="switchForecastView('daily', this)">DAILY</button>
+                    <button class="forecast-tab" onclick="switchForecastView('hourly', this)">HOURLY</button>
                 </div>
-                <div class="hourly-forecast show" id="hourly-forecast">
+                <div class="hourly-forecast" id="hourly-forecast">
                     <div class="loading"><i class="fas fa-spinner"></i> LOADING...</div>
                 </div>
-                <div class="daily-forecast" id="daily-forecast"></div>
+                <div class="daily-forecast show" id="daily-forecast"></div>
                 <div class="chart-toggles" style="display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap;">
                     <button id="toggle-temp" class="chart-toggle active" onclick="toggleChartLine('temp')" style="background: var(--bg-secondary); border: 1px solid #00d4ff; color: #00d4ff; padding: 4px 10px; font-size: 0.55rem; font-family: inherit; cursor: pointer; text-transform: uppercase;">
                         <i class="fas fa-thermometer-half"></i> TEMP
@@ -3597,10 +3760,10 @@
             </div>
         </section>
 
-        <!-- Accumulation Panel -->
+        <!-- Accumulation Forecast Panel -->
         <section class="panel accum-panel">
             <div class="panel-header">
-                <div class="panel-title"><i class="fas fa-layer-group"></i> ACCUMULATION</div>
+                <div class="panel-title"><i class="fas fa-layer-group"></i> ACCUMULATION FORECAST</div>
                 <div class="panel-meta">METRO</div>
             </div>
             <div class="panel-content">
@@ -3626,6 +3789,28 @@
                             <span class="accum-value">0.5-1"</span>
                         </div>
                         <div class="accum-bar"><div class="accum-fill sleet" style="width: 40%;"></div></div>
+                    </div>
+                </div>
+
+                <!-- 3D Accumulation Terrain View -->
+                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-dim);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-size: 0.5rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
+                            <i class="fas fa-cube"></i> 3D TERRAIN VIEW
+                        </span>
+                        <span style="font-size: 0.45rem; color: var(--accent-purple);">DRAG TO ROTATE</span>
+                    </div>
+                    <div class="exp-views-canvas-container" style="height: 220px; border-radius: 6px; overflow: hidden;">
+                        <canvas class="exp-canvas" id="exp-canvas-accum"></canvas>
+                        <div class="exp-loading" id="exp-loading-accum">
+                            <div class="exp-loading-spinner"></div>
+                            <div class="exp-loading-text">Loading 3D...</div>
+                        </div>
+                        <div class="exp-legend" style="bottom: 5px; right: 5px;">
+                            <div class="exp-legend-item"><div class="exp-legend-color" style="background: #ffffff;"></div><span>Snow</span></div>
+                            <div class="exp-legend-item"><div class="exp-legend-color" style="background: #4169e1;"></div><span>Rain</span></div>
+                            <div class="exp-legend-item"><div class="exp-legend-color" style="background: #ff69b4;"></div><span>Sleet</span></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3831,93 +4016,103 @@
                     </div>
                 </div>
 
+                <!-- SmartWay Traffic Map Embed -->
+                <div style="padding: 10px; border-top: 1px solid var(--border-dim);">
+                    <div style="font-size: 0.5rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+                        <i class="fas fa-map-marked-alt"></i> TDOT SMARTWAY LIVE MAP
+                    </div>
+                    <div style="position: relative; width: 100%; height: 200px; border-radius: 6px; overflow: hidden; background: #1a1a1a;">
+                        <iframe
+                            src="https://smartway.tn.gov/traffic?latitude=36.1627&longitude=-86.7816&zoom=10"
+                            style="width: 100%; height: 100%; border: none; filter: brightness(0.9) contrast(1.1);"
+                            loading="lazy"
+                            title="TDOT SmartWay Traffic Map"
+                        ></iframe>
+                        <div style="position: absolute; bottom: 5px; right: 5px; background: rgba(0,0,0,0.7); padding: 3px 8px; border-radius: 4px; font-size: 0.45rem; color: var(--text-muted);">
+                            <i class="fas fa-external-link-alt"></i> Powered by TDOT
+                        </div>
+                    </div>
+                </div>
+
                 <!-- TDOT Link -->
                 <div style="padding: 8px 10px; border-top: 1px solid var(--border-dim); display: flex; justify-content: space-between; align-items: center;">
                     <span style="font-size: 0.45rem; color: var(--text-muted);"><i class="fas fa-clock"></i> Updated: <span id="road-update-time">--</span></span>
                     <a href="https://smartway.tn.gov/traffic" target="_blank" style="font-size: 0.5rem; color: var(--accent-cyan); text-decoration: none;">
-                        TDOT SmartWay <i class="fas fa-external-link-alt"></i>
+                        Open Full Map <i class="fas fa-external-link-alt"></i>
                     </a>
                 </div>
             </div>
         </section>
 
-        <!-- Weather Models Panel -->
+        <!-- Forecast Models Panel - Quick Comparison Grid -->
         <section class="panel model-panel" id="model-panel">
             <div class="panel-header">
                 <div class="panel-title"><i class="fas fa-chart-area"></i> FORECAST MODELS</div>
                 <div class="panel-meta">
-                    <button class="fullscreen-btn" onclick="toggleFullscreen('model-panel')"><i class="fas fa-expand"></i></button>
+                    <span style="font-size: 0.45rem; color: var(--text-muted);">CLICK TO OPEN</span>
                 </div>
             </div>
-            <div class="panel-content">
-                <!-- Model Source Tabs -->
-                <div class="model-tabs">
-                    <button class="model-tab active" onclick="switchModelView('wpc', this)">WPC</button>
-                    <button class="model-tab" onclick="switchModelView('ventusky', this)">VENTUSKY</button>
-                    <button class="model-tab" onclick="switchModelView('windy', this)">WINDY</button>
-                </div>
-
-                <!-- WPC Official Forecasts -->
-                <div id="model-view-wpc" class="model-view-content">
-                    <div class="model-product-tabs" style="display: flex; gap: 4px; margin: 8px 0; flex-wrap: wrap;">
-                        <button class="product-tab active" onclick="switchWpcProduct('snow', this)">SNOW</button>
-                        <button class="product-tab" onclick="switchWpcProduct('ice', this)">ICE</button>
-                        <button class="product-tab" onclick="switchWpcProduct('composite', this)">ALL</button>
-                    </div>
-                    <div class="model-viewer" style="background: #0a0a0a; padding: 4px;">
-                        <img id="wpc-image" src="https://www.wpc.ncep.noaa.gov/wwd/day1_psnow_gt_04_conus.gif"
-                             alt="WPC Forecast" style="width: 100%; height: auto; display: block;"
-                             onerror="this.onerror=null; this.src='https://www.wpc.ncep.noaa.gov/wwd/day1_composite_conus.gif';">
-                    </div>
-                    <div style="font-size: 0.5rem; color: var(--text-muted); padding: 4px 8px; text-align: center;">
-                        <i class="fas fa-clock"></i> Official NWS/WPC Day 1 Winter Forecast
-                    </div>
-                </div>
-
-                <!-- Ventusky Interactive -->
-                <div id="model-view-ventusky" class="model-view-content" style="display: none;">
-                    <div class="model-product-tabs" style="display: flex; gap: 4px; margin: 8px 0; flex-wrap: wrap;">
-                        <button class="product-tab active" onclick="switchVentuskyLayer('snow', this)">SNOW</button>
-                        <button class="product-tab" onclick="switchVentuskyLayer('ice', this)">ICE</button>
-                        <button class="product-tab" onclick="switchVentuskyLayer('temp', this)">TEMP</button>
-                        <button class="product-tab" onclick="switchVentuskyLayer('precip', this)">PRECIP</button>
-                    </div>
-                    <div class="model-viewer" style="height: 320px;">
-                        <iframe id="ventusky-iframe" src="https://www.ventusky.com/?p=36.16;-86.78;7&l=snow-3h"
-                                style="width: 100%; height: 100%; border: none;" loading="lazy" allowfullscreen></iframe>
-                    </div>
-                    <div style="font-size: 0.5rem; color: var(--text-muted); padding: 4px 8px; text-align: center;">
-                        <i class="fas fa-mouse-pointer"></i> Interactive - drag map, use timeline at bottom
-                    </div>
-                </div>
-
-                <!-- Windy Interactive -->
-                <div id="model-view-windy" class="model-view-content" style="display: none;">
-                    <div class="model-product-tabs" style="display: flex; gap: 4px; margin: 8px 0; flex-wrap: wrap;">
-                        <button class="product-tab active" onclick="switchWindyLayer('snowAccu', this)">SNOW</button>
-                        <button class="product-tab" onclick="switchWindyLayer('iceAccu', this)">ICE</button>
-                        <button class="product-tab" onclick="switchWindyLayer('rainAccu', this)">PRECIP</button>
-                    </div>
-                    <div class="model-viewer" style="height: 320px;">
-                        <iframe id="windy-model-iframe" src="https://embed.windy.com/embed2.html?lat=36.16&lon=-86.78&detailLat=36.16&detailLon=-86.78&width=650&height=320&zoom=7&level=surface&overlay=snowAccu&product=gfs&menu=&message=true&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=true&metricWind=mph&metricTemp=%C2%B0F"
-                                style="width: 100%; height: 100%; border: none;" loading="lazy" allowfullscreen></iframe>
-                    </div>
-                    <div style="font-size: 0.5rem; color: var(--text-muted); padding: 4px 8px; text-align: center;">
-                        <i class="fas fa-mouse-pointer"></i> Interactive - GFS model data
-                    </div>
-                </div>
-
-                <!-- Quick Model Links -->
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 8px; border-top: 1px solid var(--border-dim);">
-                    <a href="https://www.pivotalweather.com/model.php?m=gfs&p=sn10_acc&r=us_se" target="_blank" class="model-quick-link">
-                        <i class="fas fa-snowflake"></i> Pivotal
+            <div class="panel-content" style="padding: 8px;">
+                <!-- Quick Model Comparison Grid -->
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                    <!-- WPC Snow -->
+                    <a href="https://www.wpc.ncep.noaa.gov/wwd/winter_wx.shtml" target="_blank" class="model-card">
+                        <div class="model-card-header">
+                            <span><i class="fas fa-snowflake" style="color: var(--accent-cyan);"></i> WPC SNOW</span>
+                            <span class="model-badge official">NWS</span>
+                        </div>
+                        <img src="https://www.wpc.ncep.noaa.gov/wwd/day1_psnow_gt_04_conus.gif" alt="WPC Snow" loading="lazy">
                     </a>
-                    <a href="https://www.wpc.ncep.noaa.gov/wwd/winter_wx.shtml" target="_blank" class="model-quick-link">
-                        <i class="fas fa-cloud-snow"></i> WPC
+
+                    <!-- WPC Ice -->
+                    <a href="https://www.wpc.ncep.noaa.gov/wwd/winter_wx.shtml" target="_blank" class="model-card">
+                        <div class="model-card-header">
+                            <span><i class="fas fa-icicles" style="color: var(--accent-red);"></i> WPC ICE</span>
+                            <span class="model-badge official">NWS</span>
+                        </div>
+                        <img src="https://www.wpc.ncep.noaa.gov/wwd/day1_pice_gt_025_conus.gif" alt="WPC Ice" loading="lazy">
                     </a>
-                    <a href="https://www.tropicaltidbits.com/analysis/models/" target="_blank" class="model-quick-link">
-                        <i class="fas fa-chart-line"></i> Models
+
+                    <!-- Pivotal GFS -->
+                    <a href="https://www.pivotalweather.com/model.php?m=gfs&p=sn10_acc&r=us_se" target="_blank" class="model-card">
+                        <div class="model-card-header">
+                            <span><i class="fas fa-chart-line" style="color: var(--accent-amber);"></i> PIVOTAL GFS</span>
+                            <span class="model-badge">GFS</span>
+                        </div>
+                        <img src="https://www.pivotalweather.com/data/models/gfs/2024012612/000hr/us_se/sn10_acc.png" alt="Pivotal GFS" loading="lazy"
+                             onerror="this.src='https://via.placeholder.com/200x120/1a1a1a/666?text=Pivotal+GFS'">
                     </a>
+
+                    <!-- Tropical Tidbits -->
+                    <a href="https://www.tropicaltidbits.com/analysis/models/?model=gfs&region=us&pkg=z500_vort&runtime=2024012612&fh=0" target="_blank" class="model-card">
+                        <div class="model-card-header">
+                            <span><i class="fas fa-globe" style="color: var(--accent-purple);"></i> TIDBITS</span>
+                            <span class="model-badge">GFS</span>
+                        </div>
+                        <img src="https://www.tropicaltidbits.com/analysis/models/gfs/2024012612/gfs_ptype_us_1.png" alt="Tropical Tidbits" loading="lazy"
+                             onerror="this.src='https://via.placeholder.com/200x120/1a1a1a/666?text=Tropical+Tidbits'">
+                    </a>
+                </div>
+
+                <!-- Interactive Model Links -->
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-dim);">
+                    <div style="font-size: 0.5rem; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px;">
+                        <i class="fas fa-mouse-pointer"></i> INTERACTIVE MAPS
+                    </div>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                        <a href="https://www.ventusky.com/?p=36.16;-86.78;7&l=snow-3h" target="_blank" class="model-quick-link">
+                            <i class="fas fa-snowflake"></i> Ventusky
+                        </a>
+                        <a href="https://www.windy.com/36.162/-86.782?36.144,-86.782,9,m:eQOadNg" target="_blank" class="model-quick-link">
+                            <i class="fas fa-wind"></i> Windy
+                        </a>
+                        <a href="https://weather.cod.edu/satrad/?pession_id=2025012421540460" target="_blank" class="model-quick-link">
+                            <i class="fas fa-satellite"></i> COD
+                        </a>
+                        <a href="https://www.weather.gov/ohx/" target="_blank" class="model-quick-link">
+                            <i class="fas fa-cloud"></i> NWS Nash
+                        </a>
+                    </div>
                 </div>
             </div>
         </section>
@@ -4363,9 +4558,6 @@
                     <button class="exp-tab-btn" data-exp-tab="terrain" onclick="switchExpView('terrain', this)">
                         <i class="fas fa-mountain"></i> TERRAIN
                     </button>
-                    <button class="exp-tab-btn" data-exp-tab="accum" onclick="switchExpView('accum', this)">
-                        <i class="fas fa-cloud-showers-heavy"></i> ACCUM
-                    </button>
                 </div>
 
                 <!-- Desktop: Grid of all 4 -->
@@ -4449,25 +4641,7 @@
                         </div>
                     </div>
 
-                    <!-- Accumulation Terrain -->
-                    <div class="exp-view-box">
-                        <div class="exp-view-box-header"><i class="fas fa-cloud-showers-heavy"></i> ACCUMULATION TERRAIN</div>
-                        <div class="exp-views-canvas-container">
-                            <canvas class="exp-canvas" id="exp-canvas-accum"></canvas>
-                            <div class="exp-loading" id="exp-loading-accum">
-                                <div class="exp-loading-spinner"></div>
-                                <div class="exp-loading-text">Loading...</div>
-                            </div>
-                            <div class="exp-legend">
-                                <div class="exp-legend-title">LAYERS</div>
-                                <div class="exp-legend-item"><div class="exp-legend-color" style="background: #ff6b35;"></div><span>Temp</span></div>
-                                <div class="exp-legend-item"><div class="exp-legend-color" style="background: #00bfff;"></div><span>Wind Chill</span></div>
-                                <div class="exp-legend-item"><div class="exp-legend-color" style="background: #ffffff;"></div><span>Snow</span></div>
-                                <div class="exp-legend-item"><div class="exp-legend-color" style="background: #4169e1;"></div><span>Rain</span></div>
-                                <div class="exp-legend-item"><div class="exp-legend-color" style="background: #ff69b4;"></div><span>Sleet</span></div>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Accumulation Terrain moved to Accumulation Forecast panel -->
                 </div>
 
                 <!-- Mobile: Single view containers -->
@@ -4495,12 +4669,6 @@
                         <div class="exp-loading" id="exp-loading-terrain-mobile"><div class="exp-loading-spinner"></div><div class="exp-loading-text">Loading...</div></div>
                     </div>
                 </div>
-                <div class="exp-view-container" id="exp-view-accum">
-                    <div class="exp-views-canvas-container">
-                        <canvas class="exp-canvas" id="exp-canvas-accum-mobile"></canvas>
-                        <div class="exp-loading" id="exp-loading-accum-mobile"><div class="exp-loading-spinner"></div><div class="exp-loading-text">Loading...</div></div>
-                    </div>
-                </div>
             </div>
         </section>
 
@@ -4509,7 +4677,7 @@
     <!-- Footer -->
     <footer class="ops-footer">
         <p>DATA: <a href="https://open-meteo.com/">OPEN-METEO</a> | <a href="https://www.ventusky.com/">VENTUSKY</a> | <a href="https://www.windy.com/">WINDY</a> | <a href="https://www.weather.gov/">NWS</a> | <a href="https://smartway.tn.gov/">TDOT</a></p>
-        <p style="margin-top: 8px; color: var(--accent-green-dim);">RIPPER RADAR // NASHVILLE ICE AGE // JAN 2026 // RIPPER</p>
+        <p style="margin-top: 8px; color: var(--accent-green-dim);">RIPPER RADAR // JAN 2026</p>
     </footer>
 
     <!-- Twitter Widgets -->
@@ -4578,6 +4746,8 @@
                     document.getElementById('humidity').textContent = c.relative_humidity_2m + '%';
                     document.getElementById('snowfall').textContent = (c.snowfall || 0).toFixed(1) + '"';
                     document.getElementById('precip-type').textContent = getPrecipType(c.weather_code);
+                    // Update animated weather icon
+                    document.getElementById('current-weather-icon').innerHTML = getWeatherIcon(c.weather_code, 80);
                 }
             } catch (e) { console.error('Conditions error:', e); }
         }
@@ -4959,7 +5129,7 @@
                 const low = Math.round(d.temperature_2m_min[i]);
                 const feelsHigh = d.apparent_temperature_max ? Math.round(d.apparent_temperature_max[i]) : high;
                 const feelsLow = d.apparent_temperature_min ? Math.round(d.apparent_temperature_min[i]) : low;
-                const icon = getWeatherIcon(d.weather_code[i]);
+                const icon = getWeatherIcon(d.weather_code[i], 48); // Larger icons for daily view
                 const dayName = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
                 const dateStr = d.time[i]; // YYYY-MM-DD format for filtering
                 let recordHtml = '';
@@ -5086,7 +5256,65 @@
             return 'MIXED';
         }
 
-        function getWeatherIcon(code) {
+        // Animated Weather Icons (basmilius/weather-icons)
+        // CDN: https://cdn.jsdelivr.net/gh/basmilius/weather-icons@2.0.0/
+        const WEATHER_ICON_CDN = 'https://cdn.jsdelivr.net/gh/basmilius/weather-icons@2.0.0/production/fill/svg';
+
+        function isNightTime() {
+            const hour = new Date().getHours();
+            return hour < 6 || hour >= 19;
+        }
+
+        function getWeatherIconName(code) {
+            const isNight = isNightTime();
+            const daySuffix = isNight ? '-night' : '-day';
+
+            // WMO Weather Codes to basmilius icon mapping
+            // Snow conditions
+            if (code >= 71 && code <= 77) return 'snow';
+            if (code >= 85 && code <= 86) return 'snow';
+
+            // Freezing rain/drizzle (ice)
+            if (code === 66 || code === 67) return 'sleet';
+            if (code === 56 || code === 57) return 'sleet';
+            if (code === 79) return 'sleet'; // Ice pellets
+
+            // Rain
+            if (code >= 80 && code <= 82) return `partly-cloudy${daySuffix}-rain`;
+            if (code >= 61 && code <= 65) return 'rain';
+
+            // Drizzle
+            if (code >= 51 && code <= 55) return 'drizzle';
+
+            // Thunderstorms
+            if (code === 95) return 'thunderstorms';
+            if (code === 96 || code === 99) return 'thunderstorms-rain';
+
+            // Fog
+            if (code === 45 || code === 48) return isNight ? 'fog-night' : 'fog-day';
+
+            // Clear/Cloudy
+            if (code === 0) return isNight ? 'clear-night' : 'clear-day';
+            if (code === 1) return isNight ? 'clear-night' : 'clear-day';
+            if (code === 2) return `partly-cloudy${daySuffix}`;
+            if (code === 3) return 'overcast';
+
+            // Default
+            return `partly-cloudy${daySuffix}`;
+        }
+
+        function getWeatherIcon(code, size = 32) {
+            // Use emojis for file:// protocol (local testing), animated SVGs for deployed
+            const useEmoji = window.location.protocol === 'file:';
+            if (useEmoji) {
+                return `<span style="font-size:${size * 0.8}px;">${getWeatherEmoji(code)}</span>`;
+            }
+            const iconName = getWeatherIconName(code);
+            return `<img src="${WEATHER_ICON_CDN}/${iconName}.svg" alt="${iconName}" class="weather-icon-animated" style="width:${size}px;height:${size}px;" onerror="this.outerHTML='<span style=\\'font-size:${size * 0.8}px;\\'>${getWeatherEmoji(code)}</span>'">`;
+        }
+
+        // Emoji fallback for local testing and error cases
+        function getWeatherEmoji(code) {
             if (code >= 71 && code <= 77) return '❄️';
             if (code >= 85 && code <= 86) return '🌨️';
             if (code === 66 || code === 67) return '🧊';
@@ -6052,7 +6280,7 @@ STAY HOME through Monday.
 ║                    ╚██████╔╝██║     ███████║                   ║
 ║                     ╚═════╝ ╚═╝     ╚══════╝                   ║
 ╠════════════════════════════════════════════════════════════════╣
-║  NASHVILLE ICE AGE // JAN 24-26, 2026 // RIPPER                ║
+║  RIPPER RADAR // JAN 2026 // NASHVILLE                         ║
 ╚════════════════════════════════════════════════════════════════╝
 `, 'color: #00ff41; font-family: monospace;');
 
@@ -6108,10 +6336,23 @@ STAY HOME through Monday.
                     expWeatherData.snowfall.push((data.hourly.snowfall?.[idx] || 0) / 2.54);
                     // Rain in inches
                     expWeatherData.rain.push(data.hourly.rain?.[idx] || 0);
-                    // Sleet: showers when temp is near/below freezing
+                    // Sleet estimation: when temp is in sleet range (28-36°F) with precipitation
                     const temp = data.hourly.temperature_2m[idx] || 40;
+                    const precipProb = data.hourly.precipitation_probability[idx] || 0;
+                    const precip = data.hourly.precipitation?.[idx] || 0;
                     const showers = data.hourly.showers?.[idx] || 0;
-                    expWeatherData.sleet.push(temp <= 35 && temp > 28 ? showers : 0);
+
+                    // Sleet forms when temp is near freezing (28-36°F) - too warm for snow, too cold for rain
+                    let sleetAmount = 0;
+                    if (temp > 28 && temp <= 36 && precipProb > 20) {
+                        // Estimate sleet from precipitation when in sleet temp range
+                        sleetAmount = Math.max(precip, showers, 0.1) * (precipProb / 100);
+                        // If also snowing, reduce sleet estimate
+                        if (data.hourly.snowfall?.[idx] > 0) {
+                            sleetAmount *= 0.5;
+                        }
+                    }
+                    expWeatherData.sleet.push(sleetAmount);
                 }
 
                 return expWeatherData;
@@ -6789,8 +7030,8 @@ STAY HOME through Monday.
         async function initExpAccumulation() {
             if (expInitialized['accum']) return;
 
-            const isMobile = window.innerWidth <= 768;
-            const canvasId = isMobile ? 'exp-canvas-accum-mobile' : 'exp-canvas-accum';
+            // Accum view is now in the Accumulation Forecast panel (always visible)
+            const canvasId = 'exp-canvas-accum';
             const result = createExpScene(canvasId);
             if (!result) return;
 
@@ -6805,7 +7046,7 @@ STAY HOME through Monday.
 
             if (!expWeatherData) await fetchExpWeatherData();
 
-            const loadingId = isMobile ? 'exp-loading-accum-mobile' : 'exp-loading-accum';
+            const loadingId = 'exp-loading-accum';
             const loadingEl = document.getElementById(loadingId);
             if (loadingEl) loadingEl.style.display = 'none';
 
@@ -7052,15 +7293,17 @@ STAY HOME through Monday.
 
         // Initialize visualizations on page load
         setTimeout(() => {
-            // Desktop: Initialize all 5 visualizations
+            // Always initialize accum since it's in the Accumulation Forecast panel
+            initExpAccumulation();
+
+            // Desktop: Initialize all 4 experimental views at bottom
             if (window.innerWidth > 768) {
                 initExpRadialClock();
                 setTimeout(() => initExpComfort(), 200);
                 setTimeout(() => initExpMultiLayer(), 400);
                 setTimeout(() => initExpTerrain(), 600);
-                setTimeout(() => initExpAccumulation(), 800);
             } else {
-                // Mobile: Only initialize the active one
+                // Mobile: Only initialize the active experimental view
                 initExpRadialClock();
             }
         }, 1000);
