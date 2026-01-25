@@ -321,6 +321,7 @@
         .ops-grid {
             display: grid;
             grid-template-columns: repeat(12, 1fr);
+            grid-auto-rows: minmax(260px, auto);
             gap: 8px;
             padding: 8px;
             max-width: 1920px;
@@ -396,6 +397,38 @@
 
         .panel-content {
             padding: 14px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* Custom scrollbar for dark theme */
+        .panel-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .panel-content::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 3px;
+        }
+
+        .panel-content::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        .panel-content::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-green-dim);
+        }
+
+        /* Panels with flex-column content layout */
+        .butts-panel .panel-content,
+        .dispatch-panel .panel-content,
+        .outage-panel .panel-content,
+        .intel-panel .panel-content {
+            display: flex;
+            flex-direction: column;
+            height: calc(100% - 44px);
+            overflow: hidden;
         }
 
         /* Storm Overview */
@@ -1071,7 +1104,7 @@
 
         /* Ice Melt Prediction Panel */
         .melt-panel {
-            grid-column: span 2;
+            grid-column: span 4;
             grid-row: span 2;
         }
 
@@ -1216,7 +1249,7 @@
 
         /* Traffic Panel */
         .traffic-panel {
-            grid-column: span 4;
+            grid-column: span 6;
             grid-row: span 2;
         }
 
@@ -1232,31 +1265,9 @@
             border: none;
         }
 
-        /* Road Conditions Panel */
-        .road-panel {
-            grid-column: span 4;
-            grid-row: span 2;
-        }
-
-        .road-panel .panel-header {
-            background: linear-gradient(135deg, #daa520 0%, #b8860b 100%);
-            border-radius: 8px 8px 0 0;
-        }
-
-        .road-panel .panel-title {
-            color: #000;
-        }
-
-        .road-panel .panel-content {
-            display: flex;
-            flex-direction: column;
-            height: calc(100% - 44px);
-            overflow: hidden;
-        }
-
         /* Model Panel */
         .model-panel {
-            grid-column: span 6;
+            grid-column: span 8;
             grid-row: span 2;
         }
 
@@ -1421,8 +1432,9 @@
 
         .model-card img {
             width: 100%;
-            height: 140px;
+            height: 240px;
             object-fit: cover;
+            object-position: center;
             background: #0a0a0a;
             display: block;
         }
@@ -1430,6 +1442,7 @@
         /* Webcam Panel */
         .webcam-panel {
             grid-column: span 4;
+            grid-row: span 2;
         }
 
         .webcam-panel .panel-content {
@@ -1644,7 +1657,7 @@
         /* 🌿 Butt's Barometer - Herb Purple */
         .butts-panel {
             grid-column: span 4;
-            height: 520px;
+            grid-row: span 2;
         }
 
         .butts-panel .panel-header {
@@ -1656,17 +1669,10 @@
             color: #fff;
         }
 
-        .butts-panel .panel-content {
-            display: flex;
-            flex-direction: column;
-            height: calc(100% - 44px);
-            overflow: hidden;
-        }
-
         /* 🚨 Dispatch Alerts Panel - Red/Amber Theme */
         .dispatch-panel {
             grid-column: span 4;
-            height: 520px;
+            grid-row: span 2;
         }
 
         .dispatch-panel .panel-header {
@@ -1678,13 +1684,6 @@
             color: #fff;
         }
 
-        .dispatch-panel .panel-content {
-            display: flex;
-            flex-direction: column;
-            height: calc(100% - 44px);
-            overflow: hidden;
-        }
-
         .dispatch-panel .dispatch-list {
             flex: 1;
             overflow-y: auto;
@@ -1693,7 +1692,7 @@
         /* ⚡ Power Outage Panel - Storm Tracking */
         .outage-panel {
             grid-column: span 4;
-            height: 420px;
+            grid-row: span 2;
         }
 
         .outage-panel .panel-header {
@@ -1703,13 +1702,6 @@
 
         .outage-panel .panel-title {
             color: #000;
-        }
-
-        .outage-panel .panel-content {
-            display: flex;
-            flex-direction: column;
-            height: calc(100% - 44px);
-            overflow: hidden;
         }
 
         .outage-summary {
@@ -1954,7 +1946,7 @@
         /* 📡 Intel Feeds Panel */
         .intel-panel {
             grid-column: span 4;
-            height: 520px;
+            grid-row: span 2;
         }
 
         .intel-panel .panel-header {
@@ -1964,13 +1956,6 @@
 
         .intel-panel .panel-title {
             color: #fff;
-        }
-
-        .intel-panel .panel-content {
-            display: flex;
-            flex-direction: column;
-            height: calc(100% - 44px);
-            overflow: hidden;
         }
 
         .discord-setup {
@@ -2580,7 +2565,7 @@
         /* Bot Updates Panel */
         .bot-updates-panel {
             grid-column: span 4;
-            height: 480px;
+            grid-row: span 2;
         }
 
         .bot-updates-panel .panel-header {
@@ -2831,6 +2816,7 @@
         /* Quick Links */
         .links-panel {
             grid-column: span 4;
+            grid-row: span 1;
         }
 
         .links-grid {
@@ -3022,15 +3008,15 @@
 
         /* Responsive - Tablet */
         @media (max-width: 1400px) {
-            .ops-grid { grid-template-columns: repeat(6, 1fr); gap: 6px; }
+            .ops-grid { grid-template-columns: repeat(6, 1fr); grid-auto-rows: minmax(240px, auto); gap: 6px; }
             .storm-overview { grid-column: span 6; }
             .conditions-panel { grid-column: span 2; }
             .forecast-panel { grid-column: span 4; }
             .radar-panel { grid-column: span 3; }
-            .traffic-panel { grid-column: span 3; }
-            .road-panel { grid-column: span 3; }
+            .traffic-panel { grid-column: span 4; }
             .accum-panel { grid-column: span 2; }
-            .model-panel { grid-column: span 4; }
+            .melt-panel { grid-column: span 2; }
+            .model-panel { grid-column: span 6; }
             .webcam-panel { grid-column: span 3; }
             .dispatch-panel { grid-column: span 3; }
             .butts-panel { grid-column: span 3; }
@@ -3043,10 +3029,11 @@
             .overview-grid { grid-template-columns: repeat(2, 1fr); }
         }
 
-        /* Responsive - Tablet */
+        /* Responsive - Small Tablet */
         @media (max-width: 1024px) {
             .ops-grid {
                 grid-template-columns: repeat(2, 1fr);
+                grid-auto-rows: minmax(200px, auto);
                 gap: 8px;
                 padding: 8px;
             }
@@ -3055,7 +3042,6 @@
             .forecast-panel { grid-column: span 1; }
             .radar-panel { grid-column: span 2; }
             .traffic-panel { grid-column: span 2; }
-            .road-panel { grid-column: span 2; }
             .model-panel { grid-column: span 2; }
             .webcam-panel { grid-column: span 2; }
         }
@@ -3064,6 +3050,7 @@
         @media (max-width: 768px) {
             .ops-grid {
                 grid-template-columns: 1fr;
+                grid-auto-rows: auto;
                 gap: 10px;
                 padding: 8px;
             }
@@ -3081,14 +3068,14 @@
             .butts-panel,
             .intel-panel,
             .ripper-panel,
-            .audio-panel,
-            .road-panel {
+            .audio-panel {
                 height: auto !important;
             }
 
             .dispatch-panel .panel-content,
             .butts-panel .panel-content,
-            .intel-panel .panel-content {
+            .intel-panel .panel-content,
+            .outage-panel .panel-content {
                 height: auto !important;
             }
 
@@ -3925,120 +3912,104 @@
         <!-- Traffic Panel -->
         <section class="panel traffic-panel" id="traffic-panel">
             <div class="panel-header">
-                <div class="panel-title"><i class="fas fa-traffic-light"></i> TRAFFIC</div>
-                <div class="panel-meta">
-                    <div style="display: flex; gap: 4px;">
-                        <button class="model-tab active" onclick="switchTrafficSource('waze', this)">WAZE</button>
-                        <button class="model-tab" onclick="switchTrafficSource('tdot', this)">TDOT</button>
-                    </div>
-                    <button class="fullscreen-btn" onclick="toggleFullscreen('traffic-panel')"><i class="fas fa-expand"></i></button>
-                </div>
-            </div>
-            <div class="panel-content">
-                <iframe id="traffic-iframe" src="https://embed.waze.com/iframe?zoom=11&lat=36.1627&lon=-86.7816&ct=livemap" allowfullscreen="" loading="lazy"></iframe>
-            </div>
-        </section>
-
-        <!-- Road Conditions Panel -->
-        <section class="panel road-panel" id="road-panel">
-            <div class="panel-header">
-                <div class="panel-title"><i class="fas fa-car-crash"></i> ROAD CONDITIONS</div>
+                <div class="panel-title"><i class="fas fa-traffic-light"></i> TRAFFIC & ROADS</div>
                 <div class="panel-meta">
                     <button onclick="fetchRoadConditions()" class="refresh-btn" title="Refresh"><i class="fas fa-sync-alt"></i></button>
                     <span class="live-indicator" style="background: var(--accent-amber);"></span>
+                    <button class="fullscreen-btn" onclick="toggleFullscreen('traffic-panel')"><i class="fas fa-expand"></i></button>
                 </div>
             </div>
             <div class="panel-content" style="padding: 0;">
+                <!-- Side-by-side Traffic Maps -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 8px;">
+                    <div style="position: relative; border-radius: 6px; overflow: hidden; background: #1a1a1a;">
+                        <div style="position: absolute; top: 4px; left: 4px; background: rgba(0,0,0,0.8); padding: 2px 6px; border-radius: 3px; font-size: 0.45rem; color: var(--accent-cyan); z-index: 10; text-transform: uppercase; letter-spacing: 1px;">
+                            <i class="fab fa-waze"></i> Waze
+                        </div>
+                        <iframe src="https://embed.waze.com/iframe?zoom=11&lat=36.1627&lon=-86.7816&ct=livemap" style="width: 100%; height: 180px; border: none;" allowfullscreen="" loading="lazy"></iframe>
+                    </div>
+                    <div style="position: relative; border-radius: 6px; overflow: hidden; background: #1a1a1a;">
+                        <div style="position: absolute; top: 4px; left: 4px; background: rgba(0,0,0,0.8); padding: 2px 6px; border-radius: 3px; font-size: 0.45rem; color: var(--accent-amber); z-index: 10; text-transform: uppercase; letter-spacing: 1px;">
+                            <i class="fas fa-road"></i> TDOT
+                        </div>
+                        <iframe src="https://smartway.tn.gov/traffic?latitude=36.1627&longitude=-86.7816&zoom=10" style="width: 100%; height: 180px; border: none; filter: brightness(0.9) contrast(1.1);" loading="lazy" title="TDOT SmartWay"></iframe>
+                    </div>
+                </div>
+
                 <!-- Road Status Summary -->
-                <div style="padding: 12px; background: linear-gradient(135deg, rgba(218, 165, 32, 0.15) 0%, rgba(218, 165, 32, 0.02) 100%); border-bottom: 1px solid var(--border-dim);">
+                <div style="padding: 10px; background: linear-gradient(135deg, rgba(218, 165, 32, 0.15) 0%, rgba(218, 165, 32, 0.02) 100%); border-top: 1px solid var(--border-dim);">
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <div id="road-status-icon" style="width: 48px; height: 48px; background: var(--accent-red); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-exclamation-triangle" style="color: #000; font-size: 1.4rem;"></i>
+                        <div id="road-status-icon" style="width: 40px; height: 40px; background: var(--accent-red); border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-exclamation-triangle" style="color: #000; font-size: 1.1rem;"></i>
                         </div>
                         <div style="flex: 1;">
-                            <div id="road-status-title" style="color: var(--accent-red); font-size: 0.8rem; font-weight: 700;">HAZARDOUS</div>
-                            <div id="road-status-desc" style="color: var(--text-secondary); font-size: 0.55rem;">Travel not recommended</div>
+                            <div id="road-status-title" style="color: var(--accent-red); font-size: 0.7rem; font-weight: 700;">HAZARDOUS</div>
+                            <div id="road-status-desc" style="color: var(--text-secondary); font-size: 0.5rem;">Travel not recommended</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Road Type Status Grid -->
-                <div style="padding: 10px;">
-                    <div style="font-size: 0.5rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
-                        <i class="fas fa-map-signs"></i> SURFACE CONDITIONS
-                    </div>
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">
-                        <div class="road-type-card" style="background: var(--bg-secondary); padding: 8px; border-radius: 4px; border-left: 3px solid var(--accent-red);">
-                            <div style="font-size: 0.6rem; color: var(--text-primary); font-weight: 600;"><i class="fas fa-road" style="color: var(--accent-amber);"></i> Interstates</div>
-                            <div style="font-size: 0.5rem; color: var(--accent-red);">Ice/Snow Covered</div>
+                <!-- Surface Conditions + Key Routes side by side -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px;">
+                    <!-- Surface Conditions -->
+                    <div>
+                        <div style="font-size: 0.45rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
+                            <i class="fas fa-map-signs"></i> SURFACE CONDITIONS
                         </div>
-                        <div class="road-type-card" style="background: var(--bg-secondary); padding: 8px; border-radius: 4px; border-left: 3px solid var(--accent-red);">
-                            <div style="font-size: 0.6rem; color: var(--text-primary); font-weight: 600;"><i class="fas fa-arrows-alt-h" style="color: var(--accent-cyan);"></i> Main Roads</div>
-                            <div style="font-size: 0.5rem; color: var(--accent-red);">Partially Treated</div>
-                        </div>
-                        <div class="road-type-card" style="background: var(--bg-secondary); padding: 8px; border-radius: 4px; border-left: 3px solid var(--accent-red);">
-                            <div style="font-size: 0.6rem; color: var(--text-primary); font-weight: 600;"><i class="fas fa-home" style="color: var(--accent-purple);"></i> Side Streets</div>
-                            <div style="font-size: 0.5rem; color: var(--accent-red);">Untreated - Dangerous</div>
-                        </div>
-                        <div class="road-type-card" style="background: var(--bg-secondary); padding: 8px; border-radius: 4px; border-left: 3px solid var(--accent-red);">
-                            <div style="font-size: 0.6rem; color: var(--text-primary); font-weight: 600;"><i class="fas fa-archway" style="color: var(--accent-ice);"></i> Bridges</div>
-                            <div style="font-size: 0.5rem; color: var(--accent-red);">BLACK ICE - Avoid</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Key Route Status -->
-                <div style="padding: 0 10px 10px;">
-                    <div style="font-size: 0.5rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
-                        <i class="fas fa-route"></i> KEY ROUTES
-                    </div>
-                    <div style="display: flex; flex-direction: column; gap: 4px;" id="road-routes">
-                        <div style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: var(--bg-void); border-radius: 4px;">
-                            <span style="width: 8px; height: 8px; background: var(--accent-red); border-radius: 50%;"></span>
-                            <span style="font-size: 0.55rem; color: var(--text-primary); flex: 1;">I-24</span>
-                            <span style="font-size: 0.5rem; color: var(--accent-red);">Slow/Hazardous</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: var(--bg-void); border-radius: 4px;">
-                            <span style="width: 8px; height: 8px; background: var(--accent-red); border-radius: 50%;"></span>
-                            <span style="font-size: 0.55rem; color: var(--text-primary); flex: 1;">I-40</span>
-                            <span style="font-size: 0.5rem; color: var(--accent-red);">Slow/Hazardous</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: var(--bg-void); border-radius: 4px;">
-                            <span style="width: 8px; height: 8px; background: var(--accent-red); border-radius: 50%;"></span>
-                            <span style="font-size: 0.55rem; color: var(--text-primary); flex: 1;">I-65</span>
-                            <span style="font-size: 0.5rem; color: var(--accent-red);">Slow/Hazardous</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: var(--bg-void); border-radius: 4px;">
-                            <span style="width: 8px; height: 8px; background: var(--accent-amber); border-radius: 50%;"></span>
-                            <span style="font-size: 0.55rem; color: var(--text-primary); flex: 1;">Briley Pkwy</span>
-                            <span style="font-size: 0.5rem; color: var(--accent-amber);">Caution</span>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                            <div style="background: var(--bg-secondary); padding: 6px; border-radius: 4px; border-left: 2px solid var(--accent-red);">
+                                <div style="font-size: 0.5rem; color: var(--text-primary); font-weight: 600;"><i class="fas fa-road" style="color: var(--accent-amber); font-size: 0.45rem;"></i> Interstates</div>
+                                <div style="font-size: 0.45rem; color: var(--accent-red);">Ice/Snow</div>
+                            </div>
+                            <div style="background: var(--bg-secondary); padding: 6px; border-radius: 4px; border-left: 2px solid var(--accent-red);">
+                                <div style="font-size: 0.5rem; color: var(--text-primary); font-weight: 600;"><i class="fas fa-arrows-alt-h" style="color: var(--accent-cyan); font-size: 0.45rem;"></i> Main Roads</div>
+                                <div style="font-size: 0.45rem; color: var(--accent-red);">Partial Treat</div>
+                            </div>
+                            <div style="background: var(--bg-secondary); padding: 6px; border-radius: 4px; border-left: 2px solid var(--accent-red);">
+                                <div style="font-size: 0.5rem; color: var(--text-primary); font-weight: 600;"><i class="fas fa-home" style="color: var(--accent-purple); font-size: 0.45rem;"></i> Side Streets</div>
+                                <div style="font-size: 0.45rem; color: var(--accent-red);">Untreated</div>
+                            </div>
+                            <div style="background: var(--bg-secondary); padding: 6px; border-radius: 4px; border-left: 2px solid var(--accent-red);">
+                                <div style="font-size: 0.5rem; color: var(--text-primary); font-weight: 600;"><i class="fas fa-archway" style="color: var(--accent-ice); font-size: 0.45rem;"></i> Bridges</div>
+                                <div style="font-size: 0.45rem; color: var(--accent-red);">BLACK ICE</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- SmartWay Traffic Map Embed -->
-                <div style="padding: 10px; border-top: 1px solid var(--border-dim);">
-                    <div style="font-size: 0.5rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
-                        <i class="fas fa-map-marked-alt"></i> TDOT SMARTWAY LIVE MAP
-                    </div>
-                    <div style="position: relative; width: 100%; height: 200px; border-radius: 6px; overflow: hidden; background: #1a1a1a;">
-                        <iframe
-                            src="https://smartway.tn.gov/traffic?latitude=36.1627&longitude=-86.7816&zoom=10"
-                            style="width: 100%; height: 100%; border: none; filter: brightness(0.9) contrast(1.1);"
-                            loading="lazy"
-                            title="TDOT SmartWay Traffic Map"
-                        ></iframe>
-                        <div style="position: absolute; bottom: 5px; right: 5px; background: rgba(0,0,0,0.7); padding: 3px 8px; border-radius: 4px; font-size: 0.45rem; color: var(--text-muted);">
-                            <i class="fas fa-external-link-alt"></i> Powered by TDOT
+                    <!-- Key Routes -->
+                    <div>
+                        <div style="font-size: 0.45rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
+                            <i class="fas fa-route"></i> KEY ROUTES
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 3px;" id="road-routes">
+                            <div style="display: flex; align-items: center; gap: 6px; padding: 4px 6px; background: var(--bg-void); border-radius: 3px;">
+                                <span style="width: 6px; height: 6px; background: var(--accent-red); border-radius: 50%;"></span>
+                                <span style="font-size: 0.5rem; color: var(--text-primary); flex: 1;">I-24</span>
+                                <span style="font-size: 0.45rem; color: var(--accent-red);">Hazardous</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; padding: 4px 6px; background: var(--bg-void); border-radius: 3px;">
+                                <span style="width: 6px; height: 6px; background: var(--accent-red); border-radius: 50%;"></span>
+                                <span style="font-size: 0.5rem; color: var(--text-primary); flex: 1;">I-40</span>
+                                <span style="font-size: 0.45rem; color: var(--accent-red);">Hazardous</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; padding: 4px 6px; background: var(--bg-void); border-radius: 3px;">
+                                <span style="width: 6px; height: 6px; background: var(--accent-red); border-radius: 50%;"></span>
+                                <span style="font-size: 0.5rem; color: var(--text-primary); flex: 1;">I-65</span>
+                                <span style="font-size: 0.45rem; color: var(--accent-red);">Hazardous</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px; padding: 4px 6px; background: var(--bg-void); border-radius: 3px;">
+                                <span style="width: 6px; height: 6px; background: var(--accent-amber); border-radius: 50%;"></span>
+                                <span style="font-size: 0.5rem; color: var(--text-primary); flex: 1;">Briley</span>
+                                <span style="font-size: 0.45rem; color: var(--accent-amber);">Caution</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- TDOT Link -->
-                <div style="padding: 8px 10px; border-top: 1px solid var(--border-dim); display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 0.45rem; color: var(--text-muted);"><i class="fas fa-clock"></i> Updated: <span id="road-update-time">--</span></span>
-                    <a href="https://smartway.tn.gov/traffic" target="_blank" style="font-size: 0.5rem; color: var(--accent-cyan); text-decoration: none;">
-                        Open Full Map <i class="fas fa-external-link-alt"></i>
+                <!-- Footer -->
+                <div style="padding: 6px 8px; border-top: 1px solid var(--border-dim); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.4rem; color: var(--text-muted);"><i class="fas fa-clock"></i> Updated: <span id="road-update-time">--</span></span>
+                    <a href="https://smartway.tn.gov/traffic" target="_blank" style="font-size: 0.45rem; color: var(--accent-cyan); text-decoration: none;">
+                        Full Map <i class="fas fa-external-link-alt"></i>
                     </a>
                 </div>
             </div>
