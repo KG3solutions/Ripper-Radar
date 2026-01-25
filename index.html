@@ -4713,7 +4713,7 @@
                 if (forecastTime > sevenDaysFromNow) break;
 
                 totalHoursChecked++;
-                if (hourly.temperature_2m[i] > FREEZING) {
+                if (hourly.temperature_2m[i] >= FREEZING) {
                     hoursAboveFreezing++;
                 }
             }
@@ -4721,7 +4721,7 @@
             // Display total hours above freezing
             if (totalHoursChecked > 0) {
                 const pct = Math.round((hoursAboveFreezing / totalHoursChecked) * 100);
-                thawHoursEl.innerHTML = `<i class="fas fa-clock"></i> ${hoursAboveFreezing}h above 32°F next 7 days (${pct}%)`;
+                thawHoursEl.innerHTML = `<i class="fas fa-clock"></i> ${hoursAboveFreezing}h at/above 32°F next 7 days (${pct}%)`;
             }
 
             // Find first hour above freezing from now
@@ -4730,7 +4730,7 @@
                 if (forecastTime < now) continue; // Skip past hours
 
                 const temp = hourly.temperature_2m[i];
-                if (temp > FREEZING) {
+                if (temp >= FREEZING) {
                     // Calculate time difference
                     const diffMs = forecastTime - now;
                     const diffHours = Math.round(diffMs / (1000 * 60 * 60));
