@@ -85,7 +85,7 @@ Or just push to your connected Git repository.
 ## File Structure
 
 ```
-ice-age/
+Ripper-Radar/
 ├── nashville-storm-dashboard.html   # Main dashboard
 ├── netlify.toml                      # Netlify configuration
 ├── netlify/

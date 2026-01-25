@@ -174,7 +174,7 @@ export default async (request, context) => {
   const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
   const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
   const GITHUB_OWNER = process.env.GITHUB_OWNER || 'your-username';
-  const GITHUB_REPO = process.env.GITHUB_REPO || 'ice-age';
+  const GITHUB_REPO = process.env.GITHUB_REPO || 'Ripper-Radar';
   const NETLIFY_SITE_ID = process.env.NETLIFY_SITE_ID || '3bc451ab-d67a-423c-be4b-993930d4b0ad';
   const NETLIFY_AUTH_TOKEN = process.env.NETLIFY_AUTH_TOKEN;
 
