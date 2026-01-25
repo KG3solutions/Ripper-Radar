@@ -3929,7 +3929,7 @@
                 <div class="panel-meta">
                     <div style="display: flex; gap: 4px;">
                         <button class="model-tab active" onclick="switchTrafficSource('waze', this)">WAZE</button>
-                        <button class="model-tab" onclick="switchTrafficSource('tomtom', this)">TOMTOM</button>
+                        <button class="model-tab" onclick="switchTrafficSource('tdot', this)">TDOT</button>
                     </div>
                     <button class="fullscreen-btn" onclick="toggleFullscreen('traffic-panel')"><i class="fas fa-expand"></i></button>
                 </div>
@@ -5440,7 +5440,7 @@
             const iframe = document.getElementById('traffic-iframe');
             const trafficMap = {
                 'waze': 'https://embed.waze.com/iframe?zoom=11&lat=36.1627&lon=-86.7816&ct=livemap',
-                'tomtom': 'https://www.tomtom.com/traffic/#/@36.1627,-86.7816,11/map/trafficFlow'
+                'tdot': 'https://smartway.tn.gov/traffic?features=background,incidents,weather,cameras,message_signs,smartway_rwis&latlng=36.1627,-86.7816&zoom=11'
             };
             iframe.src = trafficMap[source] || trafficMap['waze'];
         }
