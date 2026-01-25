@@ -87,6 +87,9 @@ async function callClaude(apiKey, systemPrompt, userMessage) {
   }
 
   const data = await response.json();
+  if (!data.content || !Array.isArray(data.content) || !data.content[0]?.text) {
+    throw new Error('Invalid Claude API response structure');
+  }
   return data.content[0].text;
 }
 
