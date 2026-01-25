@@ -3,11 +3,13 @@
 
 // States along the storm path (west to east toward Nashville)
 // API returns full state names, not abbreviations
-const STORM_PATH_STATES = ['Mississippi', 'Alabama', 'Tennessee', 'Arkansas', 'Louisiana'];
+const STORM_PATH_STATES = ['Mississippi', 'Alabama', 'Tennessee', 'Kentucky', 'Georgia', 'Arkansas', 'Louisiana'];
 const STATE_ABBREV = {
   'Mississippi': 'MS',
   'Alabama': 'AL',
   'Tennessee': 'TN',
+  'Kentucky': 'KY',
+  'Georgia': 'GA',
   'Arkansas': 'AR',
   'Louisiana': 'LA'
 };
@@ -15,8 +17,10 @@ const STATE_ABBREV = {
 // Key counties to monitor (storm path toward Nashville)
 const KEY_COUNTIES = {
   'MS': ['Hinds', 'Madison', 'Rankin', 'DeSoto', 'Lee', 'Lauderdale', 'Lowndes', 'Oktibbeha'],
-  'AL': ['Jefferson', 'Madison', 'Morgan', 'Tuscaloosa', 'Colbert', 'Lauderdale', 'Limestone'],
-  'TN': ['Davidson', 'Williamson', 'Rutherford', 'Wilson', 'Sumner', 'Robertson', 'Montgomery', 'Shelby', 'Maury'],
+  'AL': ['Jefferson', 'Madison', 'Morgan', 'Tuscaloosa', 'Colbert', 'Lauderdale', 'Limestone', 'Marshall', 'DeKalb'],
+  'TN': ['Davidson', 'Williamson', 'Rutherford', 'Wilson', 'Sumner', 'Robertson', 'Montgomery', 'Shelby', 'Maury', 'Cheatham', 'Dickson'],
+  'KY': ['Warren', 'Simpson', 'Logan', 'Christian', 'Todd', 'Trigg'],
+  'GA': ['Dade', 'Walker', 'Catoosa', 'Whitfield', 'Murray', 'Floyd', 'Chattooga'],
   'AR': ['Pulaski', 'Craighead', 'Washington', 'Benton'],
   'LA': ['East Baton Rouge', 'Orleans', 'Jefferson', 'Caddo']
 };

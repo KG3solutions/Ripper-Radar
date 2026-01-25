@@ -3594,58 +3594,58 @@
             <div class="overview-content" id="overview-content">
                 <div class="overview-grid">
                     <div class="overview-section">
-                        <h4><i class="fas fa-exclamation-circle"></i> Active Warnings</h4>
+                        <h4><i class="fas fa-exclamation-circle"></i> Active Warnings (2 AM SUN)</h4>
                         <ul>
-                            <li><i class="fas fa-check"></i> Winter Storm Warning: Davidson, Williamson, Rutherford Counties</li>
-                            <li><i class="fas fa-check"></i> Ice Storm Warning: Counties south of I-40</li>
-                            <li><i class="fas fa-check"></i> Wind Chill Warning: Mon-Tue (sub-zero)</li>
-                            <li><i class="fas fa-check"></i> Tennessee State of Emergency declared</li>
+                            <li><i class="fas fa-check"></i> Ice Storm Warning: Middle TN through noon Sunday</li>
+                            <li><i class="fas fa-check"></i> Wind Chill Warning: Sun night - Tue morning</li>
+                            <li><i class="fas fa-check"></i> Tennessee State of Emergency in effect</li>
+                            <li><i class="fas fa-check"></i> Travel discouraged statewide</li>
                         </ul>
                     </div>
                     <div class="overview-section">
-                        <h4><i class="fas fa-snowflake"></i> Expected Impacts</h4>
+                        <h4><i class="fas fa-snowflake"></i> Current Conditions</h4>
                         <ul>
-                            <li><i class="fas fa-check"></i> Snow/Sleet: 2-4" metro, 4-8" north of I-40</li>
-                            <li><i class="fas fa-check"></i> Ice Accumulation: 0.5-0.75" on surfaces</li>
-                            <li><i class="fas fa-check"></i> Arctic Follow-up: Single-digit temps</li>
-                            <li><i class="fas fa-check"></i> Power Outages: HIGH RISK from ice</li>
+                            <li><i class="fas fa-check"></i> Snow phase complete: 2-4" on ground</li>
+                            <li><i class="fas fa-check"></i> ICE NOW ACCUMULATING on surfaces</li>
+                            <li><i class="fas fa-check"></i> Freezing rain continues through morning</li>
+                            <li><i class="fas fa-check"></i> Roads: EXTREMELY HAZARDOUS</li>
                         </ul>
                     </div>
                     <div class="overview-section">
-                        <h4><i class="fas fa-shield-alt"></i> Key Reminders</h4>
+                        <h4><i class="fas fa-shield-alt"></i> Immediate Actions</h4>
                         <ul>
-                            <li><i class="fas fa-check"></i> Avoid travel Sat through Mon morning</li>
-                            <li><i class="fas fa-check"></i> Protect pipes: Let faucets drip</li>
-                            <li><i class="fas fa-check"></i> Charge devices, gather flashlights</li>
-                            <li><i class="fas fa-check"></i> Check on elderly neighbors</li>
+                            <li><i class="fas fa-check"></i> STAY INSIDE - do not travel</li>
+                            <li><i class="fas fa-check"></i> Keep faucets dripping (pipe freeze risk)</li>
+                            <li><i class="fas fa-check"></i> Conserve phone battery if power out</li>
+                            <li><i class="fas fa-check"></i> Stay away from downed power lines</li>
                         </ul>
                     </div>
                     <div class="overview-section">
-                        <h4><i class="fas fa-clock"></i> Storm Timeline</h4>
+                        <h4><i class="fas fa-clock"></i> Next 24 Hours</h4>
                         <div class="timeline">
-                            <div class="timeline-item snow">
-                                <div class="timeline-time">SAT 06:00-10:00</div>
-                                <div class="timeline-desc">Snow begins</div>
-                            </div>
-                            <div class="timeline-item snow">
-                                <div class="timeline-time">SAT 10:00-16:00</div>
-                                <div class="timeline-desc">Heavy snow, 1-2"/hr</div>
+                            <div class="timeline-item ice">
+                                <div class="timeline-time">NOW - 8 AM</div>
+                                <div class="timeline-desc">Freezing rain continues</div>
                             </div>
                             <div class="timeline-item ice">
-                                <div class="timeline-time">SAT 16:00 - SUN 06:00</div>
-                                <div class="timeline-desc">Transition to ice</div>
-                            </div>
-                            <div class="timeline-item ice">
-                                <div class="timeline-time">SUN 06:00-18:00</div>
-                                <div class="timeline-desc">ICE ACCUMULATES</div>
+                                <div class="timeline-time">SUN 8 AM - NOON</div>
+                                <div class="timeline-desc">Ice accumulation peaks</div>
                             </div>
                             <div class="timeline-item end">
-                                <div class="timeline-time">SUN EVENING</div>
-                                <div class="timeline-desc">Precipitation ends</div>
+                                <div class="timeline-time">SUN AFTERNOON</div>
+                                <div class="timeline-desc">Precip tapers off</div>
+                            </div>
+                            <div class="timeline-item cold">
+                                <div class="timeline-time">SUN NIGHT</div>
+                                <div class="timeline-desc">Temps plunge, teens</div>
+                            </div>
+                            <div class="timeline-item cold">
+                                <div class="timeline-time">MON MORNING</div>
+                                <div class="timeline-desc">Single digits, wind chill -5 to -15</div>
                             </div>
                             <div class="timeline-item cold">
                                 <div class="timeline-time">MON-TUE</div>
-                                <div class="timeline-desc">Arctic blast</div>
+                                <div class="timeline-desc">Dangerous cold persists</div>
                             </div>
                         </div>
                     </div>
@@ -5469,28 +5469,35 @@
                 document.getElementById('ripper-display').textContent = saved;
                 document.getElementById('ripper-textarea').value = saved;
             } else {
-                const def = `[STORM FORECAST - JAN 24, 2026]
+                const def = `[CURRENT STATUS - SUN JAN 26, 2 AM]
 
-▸ Snow today → sleet/freezing rain tonight
-▸ Ice accumulation: 0.5-0.75" (south of I-40)
-▸ Arctic blast arrives Sunday
-▸ Lows: single digits to BELOW ZERO Mon-Tue
+▸ Snow phase COMPLETE: 2-4" on ground
+▸ ICE NOW FALLING - accumulating on all surfaces
+▸ Freezing rain continues through morning
+▸ Ice total: 0.25-0.5" expected
 
-⚠️ POWER OUTAGES LIKELY - Ice on lines/trees
+⚠️ POWER OUTAGE RISK INCREASING
+   Ice loading on trees/lines
 
 ───────────────────────────
-🔥 PRO TIPS
+📅 SUNDAY FORECAST
 ───────────────────────────
-• Turn UP heat before bed tonight
-  (pre-heat your home in case power goes out)
-• Close off unused rooms
-• Charge ALL devices NOW
-• Fill bathtub for flushing water
-• Check on elderly neighbors
+• Morning: Freezing rain tapers by noon
+• Afternoon: Cloudy, temps near 32°F
+• Evening: Clearing, temps DROP fast
+• Tonight: Low teens, wind chill 0 to -10
 
-STAY HOME through Monday.
+───────────────────────────
+🥶 MONDAY OUTLOOK
+───────────────────────────
+• High: 15-20°F (feels like 0 to -10)
+• Roads remain ICY - refreeze overnight
+• DO NOT travel unless emergency
+• Dangerous cold through Tuesday
 
-─ Source: @NashSevereWx`;
+STAY HOME. STAY WARM. STAY SAFE.
+
+─ Updated 2:00 AM Sun`;
                 document.getElementById('ripper-display').textContent = def;
                 document.getElementById('ripper-textarea').value = def;
             }
