@@ -4584,12 +4584,20 @@
 
         // NWS API Cache
         let nwsGridCache = null;
+        let nwsGridCacheTime = 0;
+        const NWS_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
         async function getNWSGrid() {
-            if (nwsGridCache) return nwsGridCache;
+            // Check if cache is still valid
+            if (nwsGridCache && (Date.now() - nwsGridCacheTime) < NWS_CACHE_TTL) {
+                return nwsGridCache;
+            }
             const res = await fetch(`https://api.weather.gov/points/${CONFIG.NASHVILLE_LAT},${CONFIG.NASHVILLE_LON}`, {
                 headers: { 'User-Agent': 'RipperRadar/1.0 (weather dashboard)' }
             });
+            if (!res.ok) {
+                throw new Error(`NWS Grid API error: ${res.status}`);
+            }
             const data = await res.json();
             nwsGridCache = {
                 office: data.properties.gridId,
@@ -4597,6 +4605,7 @@
                 gridY: data.properties.gridY,
                 forecastHourly: data.properties.forecastHourly
             };
+            nwsGridCacheTime = Date.now();
             return nwsGridCache;
         }
 
@@ -4607,9 +4616,12 @@
                 const res = await fetch(grid.forecastHourly, {
                     headers: { 'User-Agent': 'RipperRadar/1.0 (weather dashboard)' }
                 });
+                if (!res.ok) {
+                    throw new Error(`NWS Hourly API error: ${res.status}`);
+                }
                 const data = await res.json();
 
-                if (data.properties && data.properties.periods) {
+                if (data.properties && data.properties.periods && data.properties.periods.length > 0) {
                     // Convert NWS format to our format
                     const periods = data.properties.periods;
                     const hourly = {
@@ -4646,7 +4658,7 @@
         // Fallback to Open-Meteo
         async function fetchHourlyForecastOpenMeteo() {
             try {
-                const url = `https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.NASHVILLE_LAT}&longitude=${CONFIG.NASHVILLE_LON}&hourly=temperature_2m,apparent_temperature,precipitation_probability,snowfall,weather_code&temperature_unit=fahrenheit&forecast_days=14`;
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.NASHVILLE_LAT}&longitude=${CONFIG.NASHVILLE_LON}&hourly=temperature_2m,apparent_temperature,precipitation_probability,snowfall,weather_code&temperature_unit=fahrenheit&forecast_days=14&timezone=America/Chicago`;
                 const res = await fetch(url);
                 const data = await res.json();
                 if (data.hourly) {
@@ -4683,6 +4695,12 @@
             const thawTimeEl = document.getElementById('thaw-time');
             const thawHoursEl = document.getElementById('thaw-hours-total');
             const FREEZING = 32;
+
+            // Safety check for DOM elements
+            if (!thawEl || !thawTimeEl || !thawHoursEl) {
+                console.warn('Thaw forecast DOM elements not found');
+                return;
+            }
 
             // Calculate total hours above freezing in next 7 days (168 hours)
             const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -4744,9 +4762,9 @@
                 }
             }
 
-            // No thaw found in 14-day forecast period
+            // No thaw found in forecast period
             thawEl.className = 'thaw-forecast frozen';
-            thawTimeEl.innerHTML = '<i class="fas fa-snowflake"></i> Not in 14-day forecast';
+            thawTimeEl.innerHTML = '<i class="fas fa-snowflake"></i> Not in forecast range';
         }
 
         async function fetchDailyForecast() {
@@ -5525,14 +5543,28 @@ STAY HOME through Monday.
             const statesEl = document.getElementById('outage-states');
             const timeEl = document.getElementById('outage-time');
 
+            // Safety check for DOM elements
+            if (!summaryEl || !statesEl) {
+                console.warn('Power outage DOM elements not found');
+                return;
+            }
+
             try {
                 summaryEl.innerHTML = `<div style="text-align: center; color: var(--text-muted);"><i class="fas fa-spinner fa-spin"></i> Loading outage data...</div>`;
 
                 const res = await fetch('/api/power-outages');
+                if (!res.ok) {
+                    throw new Error(`API error: ${res.status}`);
+                }
                 const data = await res.json();
 
                 if (data.error) {
                     throw new Error(data.error);
+                }
+
+                // Validate response structure
+                if (!data.stateTotals || !data.byState) {
+                    throw new Error('Invalid API response structure');
                 }
 
                 // Update summary
@@ -5706,31 +5738,8 @@ STAY HOME through Monday.
 
         // NES Map Modal Functions
         function showNESMap() {
-            const overlay = document.getElementById('nes-map-overlay');
-            const iframe = document.getElementById('nes-map-iframe');
-            const fallback = document.getElementById('nes-map-fallback');
-
-            // Reset state
-            iframe.style.display = 'block';
-            fallback.style.display = 'none';
-
-            // Load the NES outage map (they use KUBRA for their map)
-            // Direct embed may not work due to X-Frame-Options, so we'll show fallback
-            iframe.src = 'https://outagemap.nespower.com/external/default.html';
-
-            overlay.classList.add('open');
-            document.body.style.overflow = 'hidden';
-
-            // Check if iframe loaded after a timeout (X-Frame-Options blocks won't trigger onerror)
-            setTimeout(() => {
-                try {
-                    // This will throw if blocked by same-origin policy
-                    const test = iframe.contentWindow.location.href;
-                } catch (e) {
-                    // Blocked - show fallback
-                    showNESMapFallback();
-                }
-            }, 3000);
+            // NES blocks iframe embedding, so just open in a new tab directly
+            window.open('https://outagemap.nespower.com/', '_blank');
         }
 
         function showNESMapFallback() {
