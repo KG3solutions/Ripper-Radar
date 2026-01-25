@@ -5763,12 +5763,16 @@ STAY HOME. STAY WARM. STAY SAFE.
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <div class="outage-total"><i class="fas fa-bolt"></i> ${totalFormatted}</div>
-                            <div class="outage-total-label">Meters without power along storm path</div>
+                            <div class="outage-total-label">Regional outages (excludes NES)</div>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-size: 0.6rem; color: var(--text-muted);">Tracking</div>
-                            <div style="font-size: 0.65rem; color: var(--accent-cyan);">LA/AR → MS → AL → Nashville/TN → KY/GA</div>
+                            <a href="https://map.datacapable.com/i/nes/" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: #fff; padding: 6px 10px; border-radius: 4px; text-decoration: none; font-size: 0.55rem; font-weight: 600;">
+                                <i class="fas fa-bolt"></i> NES LIVE MAP
+                            </a>
                         </div>
+                    </div>
+                    <div style="margin-top: 6px; padding: 4px 8px; background: rgba(255,107,107,0.15); border-radius: 4px; font-size: 0.45rem; color: var(--accent-orange);">
+                        <i class="fas fa-exclamation-triangle"></i> NES (Nashville Electric) data not available via API - click button above for accurate Nashville numbers
                     </div>
                 `;
 
@@ -5832,10 +5836,13 @@ STAY HOME. STAY WARM. STAY SAFE.
                                     </div>
                                 `).join('') : '<div style="padding: 8px; text-align: center; color: var(--text-muted); font-size: 0.5rem;">No significant outages</div>'}
                                 ${isNash ? `
-                                    <div style="padding: 8px 0 4px; border-top: 1px solid var(--border-dim); margin-top: 6px; text-align: center;">
-                                        <button class="nes-view-btn" onclick="event.stopPropagation(); showNESMap();">
-                                            <i class="fas fa-map-marked-alt"></i> View NES Outage Map
-                                        </button>
+                                    <div style="padding: 8px; background: rgba(255,107,107,0.1); border-radius: 4px; margin-top: 6px; text-align: center;">
+                                        <div style="font-size: 0.45rem; color: var(--accent-orange); margin-bottom: 6px;">
+                                            <i class="fas fa-exclamation-triangle"></i> Numbers above exclude NES customers
+                                        </div>
+                                        <a href="https://map.datacapable.com/i/nes/" target="_blank" class="nes-view-btn" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); border: none;">
+                                            <i class="fas fa-external-link-alt"></i> VIEW REAL NES OUTAGES
+                                        </a>
                                     </div>
                                 ` : ''}
                             </div>
@@ -5954,8 +5961,8 @@ STAY HOME. STAY WARM. STAY SAFE.
 
         // NES Map Modal Functions
         function showNESMap() {
-            // NES blocks iframe embedding, so just open in a new tab directly
-            window.open('https://outagemap.nespower.com/', '_blank');
+            // DataCapable has better real-time NES data
+            window.open('https://map.datacapable.com/i/nes/', '_blank');
         }
 
         function showNESMapFallback() {
