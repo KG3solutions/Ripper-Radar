@@ -2,27 +2,20 @@
 // Monitors Discord, implements feedback, deploys changes
 // Triggered via: /api/autonomous-agent or scheduled
 
-const FEEDBACK_KEYWORDS = [
-  'bug', 'broken', 'fix', 'issue', 'problem', 'error', 'crash',
-  'doesn\'t work', 'not working', 'add', 'change', 'update', 'remove',
-  'should', 'could', 'wish', 'please', 'would be nice', 'can you',
-  'why does', 'why is', 'wrong', 'missing', 'need', 'want'
-];
-
 const IGNORE_AUTHORS = ['Ripper Radar']; // Don't process bot's own messages
 
-function isActionableFeedback(msg) {
+function isBotMention(msg) {
+  if (!msg.content) return false;
+  const lower = msg.content.toLowerCase();
+  return msg.content.includes('<@1464438921239724096>') ||
+         lower.includes('ripper radar') ||
+         lower.includes('@ripper');
+}
+
+function isHumanMessage(msg) {
   if (!msg.content || msg.author?.bot) return false;
   if (IGNORE_AUTHORS.includes(msg.author?.display_name)) return false;
-
-  const lower = msg.content.toLowerCase();
-  // Must mention the bot OR contain feedback keywords
-  const mentionsBot = msg.content.includes('<@1464438921239724096>') ||
-                      lower.includes('ripper') ||
-                      lower.includes('@ripper');
-  const hasFeedback = FEEDBACK_KEYWORDS.some(kw => lower.includes(kw));
-
-  return mentionsBot && hasFeedback;
+  return true;
 }
 
 function categorize(content) {
@@ -199,26 +192,44 @@ export default async (request, context) => {
   }
 
   try {
-    // 1. Fetch recent Discord messages
-    const messages = await fetchDiscordMessages(DISCORD_BOT_TOKEN, DISCORD_CHANNEL_ID, 30);
+    // 1. Fetch Discord messages (more for context)
+    const messages = await fetchDiscordMessages(DISCORD_BOT_TOKEN, DISCORD_CHANNEL_ID, 50);
 
-    // 2. Find actionable feedback (last 2 hours only)
+    // 2. Build context from last 2 hours, but only respond to last 2 minutes
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-    const actionableItems = messages
-      .filter(msg => new Date(msg.timestamp) > twoHoursAgo && isActionableFeedback(msg))
+    const twoMinsAgo = new Date(Date.now() - 2 * 60 * 1000);
+
+    // Find the timestamp of the bot's most recent message
+    const lastBotMessage = messages.find(msg => msg.author?.bot && msg.author?.username === 'Ripper Radar');
+    const lastBotTime = lastBotMessage ? new Date(lastBotMessage.timestamp) : new Date(0);
+
+    // All recent messages for CONTEXT
+    const contextMessages = messages
+      .filter(msg => new Date(msg.timestamp) > twoHoursAgo && isHumanMessage(msg))
       .map(msg => ({
         id: msg.id,
         author: msg.author.global_name || msg.author.username,
         content: msg.content,
         category: categorize(msg.content),
-        timestamp: msg.timestamp
-      }));
+        timestamp: msg.timestamp,
+        isMention: isBotMention(msg),
+        isRecent: new Date(msg.timestamp) > twoMinsAgo,
+        isAfterLastBot: new Date(msg.timestamp) > lastBotTime
+      }))
+      .reverse(); // Chronological order
 
-    if (actionableItems.length === 0) {
+    // Only consider messages that came AFTER our last response
+    const newMessages = contextMessages.filter(m => m.isAfterLastBot);
+    const directMentions = newMessages.filter(m => m.isMention);
+    const hasDirectMention = directMentions.length > 0;
+
+    // No new messages since we last responded? Skip.
+    if (newMessages.length === 0) {
       return new Response(JSON.stringify({
         status: 'no_action',
-        message: 'No actionable feedback found in last 2 hours',
-        messagesChecked: messages.length
+        message: 'No new messages since last response',
+        messagesChecked: messages.length,
+        lastBotResponse: lastBotTime.toISOString()
       }), {
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
       });
@@ -231,52 +242,88 @@ export default async (request, context) => {
     }
 
     // 4. Ask Claude to analyze feedback and generate fix
-    const systemPrompt = `You are the Ripper Radar autonomous agent. You maintain a Nashville weather dashboard (index.html).
+    const systemPrompt = `You are Ripper Radar, an autonomous Discord bot for a Nashville weather dashboard. You respond to messages, answer questions, AND can make changes to the website.
 
-Your personality: Sarcastic, self-deprecating, but helpful. You call users "Butts" affectionately. You admit mistakes openly.
+PERSONALITY:
+- Sarcastic, self-deprecating, but genuinely helpful
+- You call the community "Butts" affectionately
+- You admit mistakes openly and make fun of yourself
+- You're knowledgeable about Nashville weather and the ice storm
+- Keep responses concise but entertaining
 
-RULES:
-1. Only make SAFE changes - text updates, styling tweaks, small bug fixes
-2. NEVER delete major features or break functionality
-3. NEVER touch API keys, tokens, or credentials
-4. If a request is too complex or risky, respond with {"action": "skip", "reason": "..."}
-5. Keep changes minimal and focused
+CAPABILITIES:
+1. ANSWER QUESTIONS - about weather, the dashboard, Nashville, the storm, etc.
+2. MAKE WEBSITE CHANGES - fix bugs, add features, update text, tweak styling
+3. CHAT - just respond to comments, jokes, or conversation
 
-When you decide to make a change, respond with ONLY valid JSON:
+RULES FOR CODE CHANGES:
+- Only make SAFE changes - text updates, styling tweaks, small bug fixes, adding simple features
+- NEVER delete major features or break functionality
+- NEVER touch API keys, tokens, or credentials
+- For complex requests, explain what would be needed and offer to do simpler parts
+- Keep changes minimal and focused
+- For UI/design changes: use modern CSS, maintain the dark theme aesthetic, use CSS variables when possible
+
+WHEN TO RESPOND:
+- Direct @mentions: ALWAYS respond
+- Interesting banter/conversation: Respond if you have something genuinely funny or useful to add
+- If you have nothing new to contribute, use "no_action" - don't force a response
+
+KNOWN PEOPLE:
+- kenny/defidipper = Kenny, your creator ("management")
+- i2udeboy = Rajib
+- therickylakeshow = Ricky
+- mackymulty = Jeremy (in Bowling Green, KY)
+- Butts = Butts
+
+RESPONSE FORMAT - Always respond with valid JSON:
+
+For questions/chat (most common):
+{
+  "action": "respond",
+  "discordResponse": "Your witty response here"
+}
+
+For website changes:
 {
   "action": "update",
   "description": "Brief description of what you changed",
-  "discordResponse": "Sarcastic message to post to Discord about the fix",
+  "discordResponse": "Message about what you fixed/added",
   "changes": [
-    {
-      "search": "exact string to find",
-      "replace": "replacement string"
-    }
+    {"search": "exact string to find", "replace": "replacement string"}
   ]
 }
 
-If you can't or shouldn't make changes:
+If you can't do something:
 {
   "action": "skip",
-  "reason": "Why you're not making changes",
-  "discordResponse": "Message to post to Discord explaining"
+  "reason": "Why",
+  "discordResponse": "Explanation to user"
 }
 
-If you just want to respond without code changes:
+If there's nothing to respond to (no mentions, nothing interesting):
 {
-  "action": "respond",
-  "discordResponse": "Your response message"
+  "action": "no_action",
+  "reason": "Nothing requiring response"
 }`;
 
-    const userMessage = `FEEDBACK TO PROCESS:
-${actionableItems.map(item => `- ${item.author}: "${item.content}" (category: ${item.category})`).join('\n')}
+    // Build conversation context (older messages for background)
+    const olderContext = contextMessages.filter(m => !m.isRecent);
+    const contextSection = olderContext.length > 0
+      ? `EARLIER CONVERSATION (for context, don't respond to these):\n${olderContext.map(item => `${item.author}: "${item.content}"`).join('\n')}\n\n---\n\n`
+      : '';
 
-RELEVANT SECTION OF index.html (first 500 lines):
+    const userMessage = `${contextSection}NEW MESSAGES (last 5 mins - respond to these if needed):
+${newMessages.map(item => `${item.isMention ? '>>> ' : ''}${item.author}: "${item.content}"`).join('\n')}
+
+${hasDirectMention ? '⚠️ MESSAGES MARKED WITH >>> ARE DIRECT MENTIONS - YOU MUST RESPOND TO THESE!' : 'No direct mentions, but feel free to chime in if you have something valuable to add.'}
+
+RELEVANT SECTION OF index.html (for context if code changes needed):
 \`\`\`html
-${indexFile.content.substring(0, 30000)}
+${indexFile.content.substring(0, 15000)}
 \`\`\`
 
-Analyze the feedback and decide what action to take. Remember your personality!`;
+Review the conversation. Respond to direct mentions (>>>). For others, only respond if genuinely useful or funny.`;
 
     const claudeResponse = await callClaude(ANTHROPIC_API_KEY, systemPrompt, userMessage);
 
@@ -301,8 +348,8 @@ Analyze the feedback and decide what action to take. Remember your personality!`
     // 6. Execute decision
     const result = {
       status: decision.action,
-      feedbackProcessed: actionableItems.length,
-      items: actionableItems.map(i => ({ author: i.author, content: i.content.substring(0, 100) }))
+      feedbackProcessed: newMessages.length,
+      items: newMessages.map(i => ({ author: i.author, content: i.content.substring(0, 100) }))
     };
 
     if (decision.action === 'update' && decision.changes?.length > 0) {
@@ -319,7 +366,7 @@ Analyze the feedback and decide what action to take. Remember your personality!`
 
       if (appliedChanges.length > 0) {
         // Commit to GitHub
-        const commitMessage = `🤖 Auto-fix: ${decision.description}\n\nTriggered by Discord feedback from: ${actionableItems.map(i => i.author).join(', ')}`;
+        const commitMessage = `🤖 Auto-fix: ${decision.description}\n\nTriggered by Discord feedback from: ${newMessages.map(i => i.author).join(', ')}`;
         await commitToGitHub(GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO, 'index.html', newContent, commitMessage, indexFile.sha);
 
         result.committed = true;
