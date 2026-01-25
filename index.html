@@ -434,6 +434,9 @@
         /* Storm Overview */
         .storm-overview {
             grid-column: span 12;
+            grid-row: span 1;
+            min-height: auto;
+            align-self: start;
         }
 
         .overview-toggle {
@@ -5717,11 +5720,13 @@ STAY HOME. STAY WARM. STAY SAFE.
             'AL': 'Alabama',
             'NASH': 'Nashville',
             'TN': 'Tennessee (All)',
+            'KY': 'Kentucky',
+            'GA': 'Georgia',
             'AR': 'Arkansas',
             'LA': 'Louisiana'
         };
 
-        const STATE_ORDER = ['MS', 'AL', 'NASH', 'TN'];  // Storm path order: MS → AL → Nashville → TN statewide
+        const STATE_ORDER = ['LA', 'AR', 'MS', 'AL', 'NASH', 'TN', 'KY', 'GA'];  // Storm path order: west to east
 
         async function fetchPowerOutages() {
             const summaryEl = document.getElementById('outage-summary');
@@ -5762,7 +5767,7 @@ STAY HOME. STAY WARM. STAY SAFE.
                         </div>
                         <div style="text-align: right;">
                             <div style="font-size: 0.6rem; color: var(--text-muted);">Tracking</div>
-                            <div style="font-size: 0.65rem; color: var(--accent-cyan);">MS → AL → Nashville → TN</div>
+                            <div style="font-size: 0.65rem; color: var(--accent-cyan);">LA/AR → MS → AL → Nashville/TN → KY/GA</div>
                         </div>
                     </div>
                 `;
