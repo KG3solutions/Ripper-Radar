@@ -59,7 +59,7 @@ export default async (request, context) => {
         const CHANNEL_ID = Netlify.env.get('DISCORD_CHANNEL_ID') || '1194763841154842765';
         const BOT_TOKEN = Netlify.env.get('DISCORD_BOT_TOKEN');
 
-        await fetch(`https://discord.com/api/v10/channels/${CHANNEL_ID}/messages`, {
+        const postResponse = await fetch(`https://discord.com/api/v10/channels/${CHANNEL_ID}/messages`, {
           method: 'POST',
           headers: {
             'Authorization': `Bot ${BOT_TOKEN}`,
@@ -69,6 +69,10 @@ export default async (request, context) => {
             content: `📝 **Feedback received from ${username}:**\n> ${feedbackText}\n\n_Thanks! This has been logged for review._`
           })
         });
+
+        if (!postResponse.ok) {
+          console.error('Failed to post feedback confirmation:', postResponse.status);
+        }
 
         return new Response(JSON.stringify({
           type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
@@ -87,6 +91,9 @@ export default async (request, context) => {
           const nwsResponse = await fetch('https://api.weather.gov/gridpoints/OHX/51,33/forecast', {
             headers: { 'User-Agent': 'RipperRadar/1.0' }
           });
+          if (!nwsResponse.ok) {
+            throw new Error(`NWS API error: ${nwsResponse.status}`);
+          }
           const data = await nwsResponse.json();
           const current = data.properties?.periods?.[0];
 
@@ -132,7 +139,7 @@ export default async (request, context) => {
           info: 'ℹ️'
         };
 
-        await fetch(`https://discord.com/api/v10/channels/${CHANNEL_ID}/messages`, {
+        const alertResponse = await fetch(`https://discord.com/api/v10/channels/${CHANNEL_ID}/messages`, {
           method: 'POST',
           headers: {
             'Authorization': `Bot ${BOT_TOKEN}`,
@@ -142,6 +149,19 @@ export default async (request, context) => {
             content: `${alertEmojis[alertType] || '📢'} **RIPPER RADAR ALERT**\n\n${alertMessage}`
           })
         });
+
+        if (!alertResponse.ok) {
+          console.error('Failed to post alert:', alertResponse.status);
+          return new Response(JSON.stringify({
+            type: 4,
+            data: {
+              content: `❌ Failed to post alert. Try again later.`,
+              flags: 64
+            }
+          }), {
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
 
         return new Response(JSON.stringify({
           type: 4,
