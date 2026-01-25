@@ -5737,12 +5737,13 @@ STAY HOME through Monday.
         const STATE_NAMES = {
             'MS': 'Mississippi',
             'AL': 'Alabama',
-            'TN': 'Tennessee',
+            'NASH': 'Nashville',
+            'TN': 'Tennessee (All)',
             'AR': 'Arkansas',
             'LA': 'Louisiana'
         };
 
-        const STATE_ORDER = ['MS', 'AL', 'TN'];  // Storm path order toward Nashville
+        const STATE_ORDER = ['MS', 'AL', 'NASH', 'TN'];  // Storm path order: MS → AL → Nashville → TN statewide
 
         async function fetchPowerOutages() {
             const summaryEl = document.getElementById('outage-summary');
@@ -5783,28 +5784,54 @@ STAY HOME through Monday.
                         </div>
                         <div style="text-align: right;">
                             <div style="font-size: 0.6rem; color: var(--text-muted);">Tracking</div>
-                            <div style="font-size: 0.7rem; color: var(--accent-cyan);">MS → AL → TN</div>
+                            <div style="font-size: 0.65rem; color: var(--accent-cyan);">MS → AL → Nashville → TN</div>
                         </div>
                     </div>
                 `;
 
+                // Extract Nashville (Davidson County) data from TN
+                const tnCounties = data.byState['TN'] || [];
+                const nashvilleCounties = tnCounties.filter(c =>
+                    ['Davidson', 'Williamson', 'Rutherford', 'Wilson', 'Sumner'].includes(c.county)
+                );
+                const nashvilleTotal = nashvilleCounties.reduce((sum, c) => sum + c.metersAffected, 0);
+                const nashvilleMeters = nashvilleCounties.reduce((sum, c) => sum + c.totalMeters, 0);
+                const nashvillePercent = nashvilleMeters > 0 ? ((nashvilleTotal / nashvilleMeters) * 100).toFixed(1) : 0;
+
+                // Create Nashville stats object
+                const nashStats = {
+                    totalAffected: nashvilleTotal,
+                    totalMeters: nashvilleMeters,
+                    percentOut: nashvillePercent,
+                    countyCount: nashvilleCounties.filter(c => c.metersAffected > 0).length
+                };
+
                 // Render states in storm path order
                 statesEl.innerHTML = STATE_ORDER.map(state => {
-                    const stats = data.stateTotals[state] || { totalAffected: 0, countyCount: 0, percentOut: 0 };
-                    const counties = data.byState[state] || [];
-                    const topCounties = counties.filter(c => c.metersAffected > 0).slice(0, 5);
+                    let stats, counties, topCounties;
+                    const isNash = state === 'NASH';
                     const isTN = state === 'TN';
 
+                    if (isNash) {
+                        stats = nashStats;
+                        counties = nashvilleCounties;
+                        topCounties = nashvilleCounties.filter(c => c.metersAffected > 0).slice(0, 5);
+                    } else {
+                        stats = data.stateTotals[state] || { totalAffected: 0, countyCount: 0, percentOut: 0 };
+                        counties = data.byState[state] || [];
+                        topCounties = counties.filter(c => c.metersAffected > 0).slice(0, 5);
+                    }
+
                     return `
-                        <div class="outage-state ${isTN ? 'highlight-tn' : ''}" data-state="${state}">
+                        <div class="outage-state ${isNash ? 'highlight-tn' : ''}" data-state="${state}">
                             <div class="outage-state-header" onclick="toggleStateDetails('${state}')">
                                 <div class="outage-state-name">
-                                    <i class="fas fa-${isTN ? 'home' : 'arrow-right'}"></i>
+                                    <i class="fas fa-${isNash ? 'home' : (isTN ? 'map' : 'arrow-right')}"></i>
                                     ${STATE_NAMES[state]}
-                                    ${isTN ? '<span style="font-size: 0.5rem; color: var(--accent-cyan); margin-left: 4px;">(NASHVILLE)</span>' : ''}
+                                    ${isNash ? '<span style="font-size: 0.5rem; color: var(--accent-cyan); margin-left: 4px;">(NES AREA)</span>' : ''}
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 8px;">
-                                    ${isTN ? '<button class="nes-view-btn" onclick="event.stopPropagation(); showNESMap();" title="View NES Outage Map"><i class="fas fa-map"></i> NES</button>' : ''}
+                                    ${isNash ? '<button class="nes-view-btn" onclick="event.stopPropagation(); showNESMap();" title="View NES Outage Map"><i class="fas fa-map"></i> NES</button>' : ''}
                                     <div class="outage-state-count">
                                         ${stats.totalAffected.toLocaleString()} out
                                         <span style="color: var(--text-muted); font-weight: normal;"> (${stats.percentOut}%)</span>
@@ -5821,7 +5848,7 @@ STAY HOME through Monday.
                                         <span class="outage-county-count">${c.metersAffected.toLocaleString()} (${c.percentOut}%)</span>
                                     </div>
                                 `).join('') : '<div style="padding: 8px; text-align: center; color: var(--text-muted); font-size: 0.5rem;">No significant outages</div>'}
-                                ${isTN ? `
+                                ${isNash ? `
                                     <div style="padding: 8px 0 4px; border-top: 1px solid var(--border-dim); margin-top: 6px; text-align: center;">
                                         <button class="nes-view-btn" onclick="event.stopPropagation(); showNESMap();">
                                             <i class="fas fa-map-marked-alt"></i> View NES Outage Map
