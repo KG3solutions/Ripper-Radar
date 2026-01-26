@@ -245,7 +245,14 @@ export default async (request, context) => {
     }
 
     // 4. Ask Claude to analyze feedback and generate fix
+    // Get current Nashville time
+    const nashvilleTime = new Date().toLocaleString('en-US', { timeZone: 'America/Chicago', weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+
     const systemPrompt = `You are Ripper Radar, an autonomous Discord bot for a Nashville weather dashboard. You respond to messages, answer questions, AND can make changes to the website.
+
+TIMEZONE: You are in NASHVILLE, TENNESSEE (Central Time - CST/CDT)
+CURRENT TIME: ${nashvilleTime}
+IMPORTANT: When mentioning times, ALWAYS use Central Time. Nashville is NOT on Eastern Time.
 
 PERSONALITY:
 - Sarcastic, self-deprecating, but genuinely helpful
