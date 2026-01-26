@@ -517,12 +517,13 @@ ${indexFile.content.substring(0, 15000)}
 
 Review the conversation. Respond to direct mentions (>>>). For others, only respond if genuinely useful or funny.`;
 
-    // Fetch images from recent Discord messages for vision context
-    const recentMessagesWithImages = messages.filter(msg => {
+    // Fetch images from Discord messages in the full context window (2 hours, not just 2 mins)
+    // This gives Claude visual context from the entire conversation, not just new messages
+    const messagesWithImages = messages.filter(msg => {
       const msgTime = new Date(msg.timestamp);
-      return msgTime > twoMinsAgo && (msg.attachments?.length > 0 || msg.embeds?.some(e => e.image || e.thumbnail));
+      return msgTime > twoHoursAgo && (msg.attachments?.length > 0 || msg.embeds?.some(e => e.image || e.thumbnail));
     });
-    const discordImageInfos = getDiscordImageAttachments(recentMessagesWithImages);
+    const discordImageInfos = getDiscordImageAttachments(messagesWithImages);
 
     // Fetch Discord images as base64 for Claude vision
     const discordImages = [];
