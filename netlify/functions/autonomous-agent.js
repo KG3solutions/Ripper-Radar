@@ -58,6 +58,97 @@ const NASHVILLE_SOURCES = {
   newschannel5: 'https://www.newschannel5.com/weather'
 };
 
+// Extract image URLs from markdown text (from Jina Reader output)
+function extractImageUrls(text) {
+  const urls = [];
+  // Match markdown images: ![alt](url)
+  const mdRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+  let match;
+  while ((match = mdRegex.exec(text)) !== null) {
+    const url = match[2];
+    if (url.match(/\.(jpg|jpeg|png|gif|webp)/i) || url.includes('pbs.twimg.com') || url.includes('media')) {
+      urls.push(url);
+    }
+  }
+  // Also match raw image URLs
+  const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+\.(jpg|jpeg|png|gif|webp)/gi;
+  while ((match = urlRegex.exec(text)) !== null) {
+    if (!urls.includes(match[0])) {
+      urls.push(match[0]);
+    }
+  }
+  return urls.slice(0, 4); // Limit to 4 images to avoid token explosion
+}
+
+// Fetch image and convert to base64
+async function fetchImageAsBase64(url) {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; RipperRadar/1.0)',
+        'Accept': 'image/*'
+      }
+    });
+    if (!response.ok) return null;
+
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
+    const arrayBuffer = await response.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString('base64');
+
+    // Determine media type
+    let mediaType = 'image/jpeg';
+    if (contentType.includes('png')) mediaType = 'image/png';
+    else if (contentType.includes('gif')) mediaType = 'image/gif';
+    else if (contentType.includes('webp')) mediaType = 'image/webp';
+
+    // Skip if too large (>5MB after base64 would be ~6.7MB)
+    if (base64.length > 7000000) return null;
+
+    return { base64, mediaType };
+  } catch (e) {
+    console.error('Image fetch error:', e);
+    return null;
+  }
+}
+
+// Extract images from Discord message attachments
+function getDiscordImageAttachments(messages) {
+  const images = [];
+  for (const msg of messages) {
+    if (msg.attachments?.length > 0) {
+      for (const att of msg.attachments) {
+        if (att.content_type?.startsWith('image/') || att.url?.match(/\.(jpg|jpeg|png|gif|webp)/i)) {
+          images.push({
+            url: att.url,
+            author: msg.author?.global_name || msg.author?.username,
+            messageContent: msg.content?.substring(0, 100)
+          });
+        }
+      }
+    }
+    // Also check embeds for images
+    if (msg.embeds?.length > 0) {
+      for (const embed of msg.embeds) {
+        if (embed.image?.url) {
+          images.push({
+            url: embed.image.url,
+            author: msg.author?.global_name || msg.author?.username,
+            messageContent: msg.content?.substring(0, 100)
+          });
+        }
+        if (embed.thumbnail?.url) {
+          images.push({
+            url: embed.thumbnail.url,
+            author: msg.author?.global_name || msg.author?.username,
+            messageContent: msg.content?.substring(0, 100)
+          });
+        }
+      }
+    }
+  }
+  return images.slice(0, 4); // Limit to 4 images
+}
+
 async function fetchDiscordMessages(token, channelId, limit = 30) {
   const response = await fetch(
     `https://discord.com/api/v10/channels/${channelId}/messages?limit=${limit}`,
@@ -92,7 +183,25 @@ async function postToDiscord(token, channelId, message) {
   return response.ok;
 }
 
-async function callClaude(apiKey, systemPrompt, userMessage) {
+async function callClaude(apiKey, systemPrompt, userMessage, images = []) {
+  // Build content array - supports vision if images provided
+  let content;
+  if (images.length > 0) {
+    content = [{ type: 'text', text: userMessage }];
+    for (const img of images) {
+      content.push({
+        type: 'image',
+        source: {
+          type: 'base64',
+          media_type: img.mediaType,
+          data: img.base64
+        }
+      });
+    }
+  } else {
+    content = userMessage;
+  }
+
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -104,7 +213,7 @@ async function callClaude(apiKey, systemPrompt, userMessage) {
       model: 'claude-opus-4-5-20251101',
       max_tokens: 4096,
       system: systemPrompt,
-      messages: [{ role: 'user', content: userMessage }]
+      messages: [{ role: 'user', content }]
     })
   });
 
@@ -293,6 +402,7 @@ CAPABILITIES:
 2. MAKE WEBSITE CHANGES - fix bugs, add features, update text, tweak styling
 3. CHAT - just respond to comments, jokes, or conversation
 4. RESEARCH - fetch live data from Twitter/news to answer questions accurately
+5. VIEW IMAGES - you can see photos/images posted in Discord or from Twitter during research. Describe what you see!
 
 RESEARCH SOURCES AVAILABLE (use "research" action to fetch):
 - nesOutages: @NESpower Twitter - official NES outage updates
@@ -407,7 +517,29 @@ ${indexFile.content.substring(0, 15000)}
 
 Review the conversation. Respond to direct mentions (>>>). For others, only respond if genuinely useful or funny.`;
 
-    const claudeResponse = await callClaude(ANTHROPIC_API_KEY, systemPrompt, userMessage);
+    // Fetch images from recent Discord messages for vision context
+    const recentMessagesWithImages = messages.filter(msg => {
+      const msgTime = new Date(msg.timestamp);
+      return msgTime > twoMinsAgo && (msg.attachments?.length > 0 || msg.embeds?.some(e => e.image || e.thumbnail));
+    });
+    const discordImageInfos = getDiscordImageAttachments(recentMessagesWithImages);
+
+    // Fetch Discord images as base64 for Claude vision
+    const discordImages = [];
+    for (const imgInfo of discordImageInfos) {
+      const imgData = await fetchImageAsBase64(imgInfo.url);
+      if (imgData) {
+        discordImages.push(imgData);
+      }
+    }
+
+    // Add image context to user message if images present
+    let imageContext = '';
+    if (discordImages.length > 0) {
+      imageContext = `\n\n[${discordImages.length} image(s) attached from Discord - analyze them and incorporate into your response if relevant]`;
+    }
+
+    const claudeResponse = await callClaude(ANTHROPIC_API_KEY, systemPrompt, userMessage + imageContext, discordImages);
 
     // 5. Parse Claude's response
     let decision;
@@ -427,9 +559,10 @@ Review the conversation. Respond to direct mentions (>>>). For others, only resp
       });
     }
 
-    // 6. Handle research action (fetch data, then re-ask Claude)
+    // 6. Handle research action (fetch data + images, then re-ask Claude)
     if (decision.action === 'research' && decision.sources?.length > 0) {
       const researchResults = {};
+      const allImageUrls = [];
 
       for (const source of decision.sources) {
         const url = NASHVILLE_SOURCES[source];
@@ -437,24 +570,40 @@ Review the conversation. Respond to direct mentions (>>>). For others, only resp
           const content = await fetchWithJina(url);
           if (content) {
             researchResults[source] = content;
+            // Extract image URLs from the content (especially Twitter images)
+            const imageUrls = extractImageUrls(content);
+            for (const imgUrl of imageUrls) {
+              allImageUrls.push({ url: imgUrl, source });
+            }
           }
         }
       }
 
-      // Re-ask Claude with the research data
+      // Fetch images for vision (limit to 3 to manage tokens)
+      const researchImages = [];
+      for (const imgInfo of allImageUrls.slice(0, 3)) {
+        const imgData = await fetchImageAsBase64(imgInfo.url);
+        if (imgData) {
+          researchImages.push(imgData);
+        }
+      }
+
+      // Re-ask Claude with the research data AND images
       const researchPrompt = `You asked to research: "${decision.question}"
 
 Here's what I found:
 
 ${Object.entries(researchResults).map(([source, content]) => `=== ${source} ===\n${content}`).join('\n\n')}
 
-Now answer the original question based on this research. Respond with JSON:
+${researchImages.length > 0 ? `\n[${researchImages.length} images are attached from the research sources - analyze them for relevant info]` : ''}
+
+Now answer the original question based on this research (and images if provided). Respond with JSON:
 {
   "action": "respond",
   "discordResponse": "Your answer based on the research"
 }`;
 
-      const followUpResponse = await callClaude(ANTHROPIC_API_KEY, systemPrompt, researchPrompt);
+      const followUpResponse = await callClaude(ANTHROPIC_API_KEY, systemPrompt, researchPrompt, researchImages);
       const followUpMatch = followUpResponse.match(/\{[\s\S]*\}/);
       if (followUpMatch) {
         decision = JSON.parse(followUpMatch[0]);
