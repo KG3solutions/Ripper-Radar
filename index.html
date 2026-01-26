@@ -3757,28 +3757,31 @@
                 <div class="panel-meta">METRO</div>
             </div>
             <div class="panel-content">
-                <div class="accum-bars">
-                    <div class="accum-item">
+                <div class="accum-bars" id="accum-bars">
+                    <div class="accum-item" id="accum-snow-item">
                         <div class="accum-header">
-                            <span class="accum-label"><i class="fas fa-snowflake" style="color: var(--accent-cyan);"></i> SNOW <span class="severity-badge severity-moderate">MOD</span></span>
-                            <span class="accum-value">2-4"</span>
+                            <span class="accum-label"><i class="fas fa-snowflake" style="color: var(--accent-cyan);"></i> SNOW <span class="severity-badge" id="accum-snow-badge">--</span></span>
+                            <span class="accum-value" id="accum-snow-value">--"</span>
                         </div>
-                        <div class="accum-bar"><div class="accum-fill snow" style="width: 50%;"></div></div>
+                        <div class="accum-bar"><div class="accum-fill snow" id="accum-snow-bar" style="width: 0%;"></div></div>
                     </div>
-                    <div class="accum-item extreme">
+                    <div class="accum-item" id="accum-ice-item">
                         <div class="accum-header">
-                            <span class="accum-label"><i class="fas fa-icicles" style="color: var(--accent-red);"></i> ICE <span class="severity-badge severity-extreme">EXTREME</span></span>
-                            <span class="accum-value">0.5-0.75"</span>
+                            <span class="accum-label"><i class="fas fa-icicles" style="color: var(--accent-red);"></i> ICE <span class="severity-badge" id="accum-ice-badge">--</span></span>
+                            <span class="accum-value" id="accum-ice-value">--"</span>
                         </div>
-                        <div class="accum-bar"><div class="accum-fill ice" style="width: 95%;"></div></div>
-                        <p style="font-size: 0.6rem; margin-top: 8px; color: var(--accent-red);"><i class="fas fa-exclamation-triangle"></i> PRIMARY THREAT - power outages, tree damage</p>
+                        <div class="accum-bar"><div class="accum-fill ice" id="accum-ice-bar" style="width: 0%;"></div></div>
+                        <p style="font-size: 0.6rem; margin-top: 8px; color: var(--accent-red); display: none;" id="accum-ice-warning"><i class="fas fa-exclamation-triangle"></i> PRIMARY THREAT - power outages, tree damage</p>
                     </div>
-                    <div class="accum-item">
+                    <div class="accum-item" id="accum-sleet-item">
                         <div class="accum-header">
-                            <span class="accum-label"><i class="fas fa-cloud-meatball" style="color: var(--accent-amber);"></i> SLEET <span class="severity-badge severity-high">HIGH</span></span>
-                            <span class="accum-value">0.5-1"</span>
+                            <span class="accum-label"><i class="fas fa-cloud-meatball" style="color: var(--accent-amber);"></i> SLEET <span class="severity-badge" id="accum-sleet-badge">--</span></span>
+                            <span class="accum-value" id="accum-sleet-value">--"</span>
                         </div>
-                        <div class="accum-bar"><div class="accum-fill sleet" style="width: 40%;"></div></div>
+                        <div class="accum-bar"><div class="accum-fill sleet" id="accum-sleet-bar" style="width: 0%;"></div></div>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 0.45rem; color: var(--text-muted); text-align: right;">
+                        <i class="fas fa-clock"></i> Updated: <span id="accum-update-time">--</span> | 7-day forecast
                     </div>
                 </div>
 
@@ -5958,6 +5961,126 @@ STAY HOME. STAY WARM. STAY SAFE.
         // Fetch road conditions on load and every 5 minutes
         fetchRoadConditions();
         setInterval(fetchRoadConditions, 300000);
+
+        // ============================================
+        // AUTOMATIC ACCUMULATION FORECAST
+        // ============================================
+        async function fetchAccumulationForecast() {
+            try {
+                // Fetch 7-day hourly forecast from Open-Meteo
+                const url = `https://api.open-meteo.com/v1/forecast?` +
+                    `latitude=${CONFIG.NASHVILLE_LAT}&longitude=${CONFIG.NASHVILLE_LON}` +
+                    `&hourly=temperature_2m,precipitation_probability,precipitation,snowfall,rain,showers,freezing_level_height` +
+                    `&temperature_unit=fahrenheit&precipitation_unit=inch` +
+                    `&timezone=America/Chicago&forecast_days=7`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                let totalSnow = 0;
+                let totalIce = 0;
+                let totalSleet = 0;
+                let totalRain = 0;
+
+                const hourly = data.hourly;
+                for (let i = 0; i < hourly.time.length; i++) {
+                    const temp = hourly.temperature_2m[i];
+                    const precipProb = hourly.precipitation_probability[i] || 0;
+                    const precip = hourly.precipitation[i] || 0;
+                    const snow = (hourly.snowfall[i] || 0) / 2.54; // cm to inches
+                    const rain = hourly.rain[i] || 0;
+                    const showers = hourly.showers[i] || 0;
+
+                    // Accumulate snow
+                    totalSnow += snow;
+
+                    // Estimate ice: freezing rain when temp is 28-33°F with precipitation
+                    if (temp >= 28 && temp <= 33 && precipProb > 30 && (rain > 0 || precip > 0)) {
+                        // Ice accumulation is roughly 1:1 with liquid equivalent for freezing rain
+                        totalIce += Math.max(rain, precip * 0.5) * (precipProb / 100);
+                    }
+
+                    // Estimate sleet: when temp is 32-36°F with precipitation
+                    if (temp > 32 && temp <= 36 && precipProb > 20 && precip > 0) {
+                        const sleetAmount = Math.max(precip, showers) * (precipProb / 100) * 0.5;
+                        if (snow <= 0) { // Only count sleet if not snowing
+                            totalSleet += sleetAmount;
+                        }
+                    }
+
+                    // Rain (above 36°F)
+                    if (temp > 36) {
+                        totalRain += rain;
+                    }
+                }
+
+                // Update the UI
+                updateAccumulationUI(totalSnow, totalIce, totalSleet);
+
+            } catch (error) {
+                console.error('Accumulation forecast error:', error);
+            }
+        }
+
+        function updateAccumulationUI(snow, ice, sleet) {
+            // Helper to format range
+            const formatRange = (val) => {
+                if (val < 0.1) return '<0.1"';
+                if (val < 1) return `${val.toFixed(1)}-${(val * 1.3).toFixed(1)}"`;
+                return `${Math.floor(val)}-${Math.ceil(val * 1.2)}"`;
+            };
+
+            // Helper to get severity
+            const getSeverity = (val, type) => {
+                if (type === 'snow') {
+                    if (val < 1) return { class: 'severity-low', text: 'LOW' };
+                    if (val < 3) return { class: 'severity-moderate', text: 'MOD' };
+                    if (val < 6) return { class: 'severity-high', text: 'HIGH' };
+                    return { class: 'severity-extreme', text: 'EXTREME' };
+                } else if (type === 'ice') {
+                    if (val < 0.1) return { class: 'severity-low', text: 'LOW' };
+                    if (val < 0.25) return { class: 'severity-moderate', text: 'MOD' };
+                    if (val < 0.5) return { class: 'severity-high', text: 'HIGH' };
+                    return { class: 'severity-extreme', text: 'EXTREME' };
+                } else { // sleet
+                    if (val < 0.25) return { class: 'severity-low', text: 'LOW' };
+                    if (val < 0.5) return { class: 'severity-moderate', text: 'MOD' };
+                    if (val < 1) return { class: 'severity-high', text: 'HIGH' };
+                    return { class: 'severity-extreme', text: 'EXTREME' };
+                }
+            };
+
+            // Update snow
+            const snowSeverity = getSeverity(snow, 'snow');
+            document.getElementById('accum-snow-value').textContent = formatRange(snow);
+            document.getElementById('accum-snow-badge').textContent = snowSeverity.text;
+            document.getElementById('accum-snow-badge').className = `severity-badge ${snowSeverity.class}`;
+            document.getElementById('accum-snow-bar').style.width = `${Math.min(snow / 8 * 100, 100)}%`;
+
+            // Update ice
+            const iceSeverity = getSeverity(ice, 'ice');
+            document.getElementById('accum-ice-value').textContent = formatRange(ice);
+            document.getElementById('accum-ice-badge').textContent = iceSeverity.text;
+            document.getElementById('accum-ice-badge').className = `severity-badge ${iceSeverity.class}`;
+            document.getElementById('accum-ice-bar').style.width = `${Math.min(ice / 1 * 100, 100)}%`;
+            document.getElementById('accum-ice-item').className = ice >= 0.25 ? 'accum-item extreme' : 'accum-item';
+            document.getElementById('accum-ice-warning').style.display = ice >= 0.25 ? 'block' : 'none';
+
+            // Update sleet
+            const sleetSeverity = getSeverity(sleet, 'sleet');
+            document.getElementById('accum-sleet-value').textContent = formatRange(sleet);
+            document.getElementById('accum-sleet-badge').textContent = sleetSeverity.text;
+            document.getElementById('accum-sleet-badge').className = `severity-badge ${sleetSeverity.class}`;
+            document.getElementById('accum-sleet-bar').style.width = `${Math.min(sleet / 2 * 100, 100)}%`;
+
+            // Update timestamp
+            document.getElementById('accum-update-time').textContent =
+                new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        }
+
+        // Fetch accumulation on load and every 30 minutes
+        fetchAccumulationForecast();
+        setInterval(fetchAccumulationForecast, 1800000);
 
         // NES Map Modal Functions
         function showNESMap() {
