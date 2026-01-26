@@ -178,14 +178,14 @@
         .live-indicator.amber { background: var(--accent-amber); box-shadow: var(--glow-amber); }
         .live-indicator.cyan { background: var(--accent-cyan); box-shadow: var(--glow-cyan); }
 
-        /* 🌿 Header - Ripper Radar Style */
+        /* 💖 Header - HOT PINK HEADER */
         .ops-header {
             position: sticky;
             top: 0;
             z-index: 1000;
-            background: linear-gradient(180deg, var(--bg-panel-header) 0%, var(--bg-void) 100%);
-            border-bottom: 3px solid var(--neon-pink);
-            box-shadow: 0 4px 30px rgba(255, 20, 147, 0.4), 0 0 60px rgba(255, 20, 147, 0.1);
+            background: linear-gradient(180deg, #4a0020 0%, #1a0008 100%);
+            border-bottom: 4px solid #ff1493;
+            box-shadow: 0 4px 40px rgba(255, 20, 147, 0.6), 0 0 80px rgba(255, 20, 147, 0.3);
             padding: 12px 20px;
             display: flex;
             justify-content: space-between;
@@ -201,20 +201,27 @@
         }
 
         .ops-title h1 {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 700;
-            color: var(--neon-pink-bright);
+            color: #ff69b4;
             text-transform: uppercase;
             letter-spacing: 4px;
-            text-shadow: 0 0 20px rgba(255, 20, 147, 0.8), 0 0 40px rgba(255, 20, 147, 0.4);
+            text-shadow: 0 0 30px rgba(255, 20, 147, 1), 0 0 60px rgba(255, 20, 147, 0.6), 0 0 90px rgba(255, 20, 147, 0.3);
             display: flex;
             align-items: center;
             gap: 10px;
+            animation: title-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes title-glow {
+            0%, 100% { text-shadow: 0 0 30px rgba(255, 20, 147, 1), 0 0 60px rgba(255, 20, 147, 0.6); }
+            50% { text-shadow: 0 0 40px rgba(255, 105, 180, 1), 0 0 80px rgba(255, 20, 147, 0.8), 0 0 120px rgba(255, 20, 147, 0.4); }
         }
 
         .ops-title h1::before {
             content: "💖";
-            font-size: 1.3rem;
+            font-size: 1.4rem;
+            filter: drop-shadow(0 0 10px rgba(255, 20, 147, 0.8));
         }
 
         .ops-badge {
@@ -303,11 +310,11 @@
             letter-spacing: 1px;
         }
 
-        /* 🌿 Alert Ticker - Mellow Storm Alerts */
+        /* 💖 Alert Ticker - HOT PINK ALERTS */
         .alert-ticker {
-            background: linear-gradient(90deg, var(--bg-primary), rgba(139, 69, 19, 0.15), var(--bg-primary));
-            border-bottom: 1px solid var(--accent-amber);
-            box-shadow: 0 2px 10px rgba(218, 165, 32, 0.1);
+            background: linear-gradient(90deg, #1a0008, rgba(255, 20, 147, 0.15), #1a0008);
+            border-bottom: 2px solid #ff1493;
+            box-shadow: 0 4px 20px rgba(255, 20, 147, 0.3);
             padding: 10px 0;
             overflow: hidden;
         }
@@ -324,13 +331,15 @@
             gap: 12px;
             padding: 0 50px;
             font-size: 0.75rem;
-            color: var(--accent-amber);
+            color: #ff69b4;
             text-transform: uppercase;
             letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 20, 147, 0.5);
         }
 
         .ticker-item i {
             animation: breathe 2s ease-in-out infinite;
+            color: #ff1493;
         }
 
         /* Main Grid - Tighter layout */
@@ -344,20 +353,27 @@
             margin: 0 auto;
         }
 
-        /* 🌿 Panel Base - Organic Cards */
+        /* 💖 Panel Base - HOT PINK PANELS */
         .panel {
-            background: linear-gradient(145deg, var(--bg-panel) 0%, rgba(25, 10, 25, 0.95) 100%);
-            border: 1px solid var(--neon-pink);
+            background: linear-gradient(145deg, #1a0008 0%, #2d0015 100%);
+            border: 2px solid var(--neon-pink);
             border-radius: 8px;
             position: relative;
             transition: all 0.3s ease;
             overflow: hidden;
-            box-shadow: var(--glow-pink-subtle), inset 0 0 30px rgba(255, 20, 147, 0.05);
+            box-shadow: 0 0 15px rgba(255, 20, 147, 0.4), inset 0 0 40px rgba(255, 20, 147, 0.1);
+            animation: panel-glow 4s ease-in-out infinite;
+        }
+
+        @keyframes panel-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(255, 20, 147, 0.4), inset 0 0 40px rgba(255, 20, 147, 0.1); }
+            50% { box-shadow: 0 0 25px rgba(255, 20, 147, 0.6), inset 0 0 50px rgba(255, 20, 147, 0.15); }
         }
 
         .panel:hover {
-            box-shadow: var(--glow-pink), inset 0 0 40px rgba(255, 20, 147, 0.08);
-            border-color: var(--neon-pink-bright);
+            box-shadow: 0 0 35px rgba(255, 20, 147, 0.7), inset 0 0 60px rgba(255, 20, 147, 0.2);
+            border-color: #ff69b4;
+            transform: translateY(-2px);
         }
 
         .panel::before {
@@ -367,47 +383,36 @@
             left: 0;
             right: 0;
             height: 3px;
-            background: linear-gradient(90deg, var(--accent-green-dim), var(--accent-leaf), var(--accent-herb));
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .panel:hover {
-            border-color: var(--accent-leaf);
-            box-shadow: 0 8px 30px rgba(255, 20, 147, 0.12);
-            transform: translateY(-2px);
-        }
-
-        .panel:hover::before {
+            background: linear-gradient(90deg, #ff1493, #ff69b4, #ff1493);
             opacity: 1;
         }
 
         .panel-header {
-            background: linear-gradient(135deg, var(--bg-panel-header) 0%, rgba(45, 10, 45, 0.95) 100%);
+            background: linear-gradient(135deg, #4a0020 0%, #2d0015 100%);
             padding: 10px 14px;
             border-bottom: 2px solid var(--neon-pink);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 10px rgba(255, 20, 147, 0.2);
+            box-shadow: 0 4px 15px rgba(255, 20, 147, 0.3);
         }
 
         .panel-title {
-            font-size: 0.72rem;
-            font-weight: 600;
-            color: var(--neon-pink-bright);
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #ff69b4;
             text-transform: uppercase;
             letter-spacing: 2px;
             display: flex;
             align-items: center;
             gap: 8px;
-            text-shadow: 0 0 10px rgba(255, 105, 180, 0.5);
+            text-shadow: 0 0 15px rgba(255, 105, 180, 0.8);
         }
 
         .panel-title i {
             opacity: 1;
-            color: var(--neon-pink);
-            filter: drop-shadow(0 0 4px rgba(255, 20, 147, 0.6));
+            color: #ff1493;
+            filter: drop-shadow(0 0 8px rgba(255, 20, 147, 0.8));
         }
 
         .panel-meta {
@@ -456,35 +461,46 @@
             overflow: hidden;
         }
 
-        /* Storm Overview */
+        /* Storm Overview - SURVIVAL MODE */
         .storm-overview {
             grid-column: span 12;
             grid-row: span 1;
-            min-height: auto;
+            min-height: 0 !important;
+            height: auto !important;
             align-self: start;
+            margin-bottom: 0;
+            padding: 0;
+        }
+
+        .storm-overview:not(:has(.overview-content.show)) {
+            padding-bottom: 0;
         }
 
         .overview-toggle {
             width: 100%;
-            background: linear-gradient(90deg, var(--bg-secondary) 0%, rgba(255, 20, 147, 0.05) 50%, var(--bg-secondary) 100%);
-            border: none;
+            background: linear-gradient(90deg, #4a0020 0%, rgba(255, 20, 147, 0.3) 50%, #4a0020 100%);
+            border: 2px solid var(--neon-pink);
             border-radius: 6px;
-            padding: 12px 18px;
+            padding: 10px 18px;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            color: var(--accent-herb);
+            color: var(--neon-pink-bright);
             font-family: inherit;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
             transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(255, 20, 147, 0.4);
+            animation: neon-pulse 3s ease-in-out infinite;
         }
 
         .overview-toggle:hover {
-            background: linear-gradient(90deg, var(--bg-panel-header) 0%, rgba(255, 105, 180, 0.1) 50%, var(--bg-panel-header) 100%);
-            color: var(--accent-leaf);
+            background: linear-gradient(90deg, #5a0030 0%, rgba(255, 105, 180, 0.4) 50%, #5a0030 100%);
+            color: #fff;
+            box-shadow: 0 0 25px rgba(255, 20, 147, 0.7);
         }
 
         .overview-content {
@@ -3613,7 +3629,7 @@
         <!-- Storm Overview -->
         <section class="panel storm-overview">
             <button class="overview-toggle" onclick="toggleOverview()">
-                <span><i class="fas fa-info-circle"></i> STORM OVERVIEW & PREPARATION</span>
+                <span><i class="fas fa-skull-crossbones"></i> SURVIVAL MODE</span>
                 <i class="fas fa-chevron-down" id="overview-chevron"></i>
             </button>
             <div class="overview-content" id="overview-content">
@@ -4201,27 +4217,33 @@
             </div>
         </section>
 
-        <!-- Power Outage Tracker - Storm Path -->
+        <!-- Power Outage Links -->
         <section class="panel outage-panel" id="outage-panel">
             <div class="panel-header">
-                <div class="panel-title"><i class="fas fa-plug"></i> STORM PATH OUTAGES</div>
+                <div class="panel-title"><i class="fas fa-plug"></i> POWER OUTAGES</div>
                 <div class="panel-meta">
-                    <button onclick="fetchPowerOutages()" class="refresh-btn" title="Refresh"><i class="fas fa-sync-alt"></i></button>
-                    <span class="live-indicator" style="background: var(--accent-orange);"></span>
+                    <span class="live-indicator red"></span> CRITICAL
                 </div>
             </div>
-            <div class="panel-content" style="padding: 0;">
-                <div class="outage-summary" id="outage-summary">
-                    <div style="padding: 20px; text-align: center; color: var(--text-muted);">
-                        <i class="fas fa-spinner fa-spin"></i> Loading outage data...
-                    </div>
+            <div class="panel-content" style="padding: 15px;">
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <div style="font-size: 2rem; color: var(--accent-red); margin-bottom: 5px;"><i class="fas fa-bolt"></i></div>
+                    <div style="font-size: 1.2rem; color: var(--neon-pink-bright); font-weight: 700;">200,000+</div>
+                    <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Nashville Area Without Power</div>
                 </div>
-                <div class="outage-states" id="outage-states"></div>
-                <div class="outage-footer" style="padding: 6px 10px; border-top: 1px solid var(--border-dim); display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 0.45rem; color: var(--text-muted);"><i class="fas fa-clock"></i> <span id="outage-time">--</span></span>
-                    <a href="https://poweroutage.us/" target="_blank" style="font-size: 0.5rem; color: var(--accent-cyan); text-decoration: none;">
-                        PowerOutage.us <i class="fas fa-external-link-alt"></i>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <a href="https://kubra.io/stormcenter/views/4fe405b4-9f1e-4c99-8d5d-f0cf65010900" target="_blank" class="outage-link-btn" style="display: flex; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(135deg, #ff1493 0%, #c70064 100%); color: #fff; padding: 14px 20px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 20px rgba(255, 20, 147, 0.5); transition: all 0.3s ease;">
+                        <i class="fas fa-map-marked-alt"></i> NES OUTAGE MAP (Nashville)
                     </a>
+                    <a href="https://poweroutage.us/area/state/tennessee" target="_blank" class="outage-link-btn" style="display: flex; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(135deg, #45081a 0%, #2d0012 100%); border: 1px solid var(--neon-pink); color: var(--neon-pink-bright); padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease;">
+                        <i class="fas fa-bolt"></i> Tennessee Statewide
+                    </a>
+                    <a href="https://poweroutage.us/" target="_blank" class="outage-link-btn" style="display: flex; align-items: center; justify-content: center; gap: 10px; background: transparent; border: 1px solid var(--border-dim); color: var(--text-secondary); padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease;">
+                        <i class="fas fa-globe"></i> All States
+                    </a>
+                </div>
+                <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-dim); font-size: 0.55rem; color: var(--text-muted); text-align: center;">
+                    <i class="fas fa-phone"></i> Report NES Outage: <strong style="color: var(--accent-amber);">615-234-0000</strong>
                 </div>
             </div>
         </section>
