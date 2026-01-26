@@ -3603,10 +3603,10 @@
     <!-- Alert Ticker -->
     <div class="alert-ticker">
         <div class="ticker-track">
-            <span class="ticker-item"><i class="fas fa-exclamation-triangle"></i> WINTER STORM WARNING IN EFFECT THROUGH 6:00 PM CST SUNDAY</span>
-            <span class="ticker-item"><i class="fas fa-exclamation-triangle"></i> STATE OF EMERGENCY DECLARED - AVOID ALL TRAVEL</span>
-            <span class="ticker-item"><i class="fas fa-exclamation-triangle"></i> ICE ACCUMULATION 0.5-0.75" EXPECTED - POWER OUTAGES LIKELY</span>
-            <span class="ticker-item"><i class="fas fa-exclamation-triangle"></i> WIND CHILL WARNING MON-TUE: SUB-ZERO TEMPS</span>
+            <span class="ticker-item"><i class="fas fa-exclamation-triangle"></i> BRUTAL COLD TONIGHT: 8°F - WIND CHILL BELOW ZERO</span>
+            <span class="ticker-item"><i class="fas fa-exclamation-triangle"></i> MONDAY NIGHT LOW: 1°F - DANGEROUSLY COLD</span>
+            <span class="ticker-item"><i class="fas fa-exclamation-triangle"></i> MORE TREE/POWER LINE DAMAGE EXPECTED AS TEMPS DROP</span>
+            <span class="ticker-item"><i class="fas fa-exclamation-triangle"></i> POWER RESTORATION MAY TAKE DAYS - PREPARE NOW</span>
         </div>
     </div>
 
@@ -5500,35 +5500,42 @@
                 document.getElementById('ripper-display').textContent = saved;
                 document.getElementById('ripper-textarea').value = saved;
             } else {
-                const def = `[CURRENT STATUS - SUN JAN 25, 2 AM]
+                const def = `🚨 BRUTAL COLD INCOMING 🚨
 
-▸ Snow phase COMPLETE: 2-4" on ground
-▸ ICE NOW FALLING - accumulating on all surfaces
-▸ Freezing rain continues through morning
-▸ Ice total: 0.5-0.75" expected
+▸ TONIGHT: 8°F - Wind chill below 0°F
+▸ MONDAY NIGHT: 1°F - DANGEROUSLY COLD
+▸ Ice still on trees/lines - MORE breakage coming
 
-⚠️ POWER OUTAGE RISK HIGH
-   Ice loading on trees/power lines
-
-───────────────────────────
-📅 SUNDAY FORECAST
-───────────────────────────
-• Morning: Freezing rain tapers by noon
-• Afternoon: Cloudy, temps near 32°F
-• Evening: Clearing, temps DROP fast
-• Tonight: Low teens, wind chill 0 to -10
+⚠️ CRITICAL WARNING ⚠️
+Cold will cause MORE tree damage on already
+ice-loaded branches. Expect additional power
+outages as temps plummet. If power goes out
+tonight/tomorrow, restoration will be SLOW.
 
 ───────────────────────────
-🥶 MONDAY OUTLOOK
+📅 NWS NASHVILLE FORECAST
 ───────────────────────────
-• High: 15-20°F (feels like 0 to -10)
-• Roads remain ICY - refreeze overnight
-• DO NOT travel unless emergency
-• Dangerous cold through Tuesday
+• Tonight: 8°F, Mostly Cloudy
+• Monday: High 17°F, Mostly Sunny
+• Mon Night: LOW OF 1°F (!!)
+• Tuesday: 33°F, finally warming
 
-STAY HOME. STAY WARM. STAY SAFE.
+───────────────────────────
+🥶 WHAT TO DO NOW
+───────────────────────────
+• Charge all devices NOW
+• Fill bathtubs with water
+• Gather blankets, layers
+• Check on elderly neighbors
+• Keep faucets dripping
+• DO NOT TRAVEL
 
-─ Updated 2:00 AM Sun`;
+If you lose power, you may be waiting
+DAYS for restoration. Prepare accordingly.
+
+STAY HOME. STAY WARM. STAY SAFE, BUTTS.
+
+─ Updated ${new Date().toLocaleString('en-US', {hour: 'numeric', minute: '2-digit', weekday: 'short'})}`;
                 document.getElementById('ripper-display').textContent = def;
                 document.getElementById('ripper-textarea').value = def;
             }
