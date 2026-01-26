@@ -3602,11 +3602,8 @@
 
     <!-- Alert Ticker -->
     <div class="alert-ticker">
-        <div class="ticker-track">
-            <span class="ticker-item"><i class="fas fa-exclamation-triangle"></i> BRUTAL COLD TONIGHT: 8°F - WIND CHILL BELOW ZERO</span>
-            <span class="ticker-item"><i class="fas fa-exclamation-triangle"></i> MONDAY NIGHT LOW: 1°F - DANGEROUSLY COLD</span>
-            <span class="ticker-item"><i class="fas fa-exclamation-triangle"></i> MORE TREE/POWER LINE DAMAGE EXPECTED AS TEMPS DROP</span>
-            <span class="ticker-item"><i class="fas fa-exclamation-triangle"></i> POWER RESTORATION MAY TAKE DAYS - PREPARE NOW</span>
+        <div class="ticker-track" id="ticker-track">
+            <span class="ticker-item"><i class="fas fa-spinner fa-spin"></i> Loading alerts...</span>
         </div>
     </div>
 
@@ -3622,26 +3619,20 @@
             <div class="overview-content" id="overview-content">
                 <div class="overview-grid">
                     <div class="overview-section">
-                        <h4><i class="fas fa-exclamation-circle"></i> Active Warnings (2 AM SUN)</h4>
-                        <ul>
-                            <li><i class="fas fa-check"></i> Ice Storm Warning: Middle TN through noon Sunday</li>
-                            <li><i class="fas fa-check"></i> Wind Chill Warning: Sun night - Tue morning</li>
-                            <li><i class="fas fa-check"></i> Tennessee State of Emergency in effect</li>
-                            <li><i class="fas fa-check"></i> Travel discouraged statewide</li>
+                        <h4><i class="fas fa-exclamation-circle"></i> Active Warnings <span id="overview-time" style="font-weight: normal; font-size: 0.6rem; color: var(--text-muted);"></span></h4>
+                        <ul id="overview-warnings">
+                            <li><i class="fas fa-spinner fa-spin"></i> Loading alerts...</li>
                         </ul>
                     </div>
                     <div class="overview-section">
                         <h4><i class="fas fa-snowflake"></i> Current Conditions</h4>
-                        <ul>
-                            <li><i class="fas fa-check"></i> Snow phase complete: 2-4" on ground</li>
-                            <li><i class="fas fa-check"></i> ICE NOW ACCUMULATING on surfaces</li>
-                            <li><i class="fas fa-check"></i> Freezing rain continues through morning</li>
-                            <li><i class="fas fa-check"></i> Roads: EXTREMELY HAZARDOUS</li>
+                        <ul id="overview-conditions">
+                            <li><i class="fas fa-spinner fa-spin"></i> Loading...</li>
                         </ul>
                     </div>
                     <div class="overview-section">
                         <h4><i class="fas fa-shield-alt"></i> Immediate Actions</h4>
-                        <ul>
+                        <ul id="overview-actions">
                             <li><i class="fas fa-check"></i> STAY INSIDE - do not travel</li>
                             <li><i class="fas fa-check"></i> Keep faucets dripping (pipe freeze risk)</li>
                             <li><i class="fas fa-check"></i> Conserve phone battery if power out</li>
@@ -3650,31 +3641,8 @@
                     </div>
                     <div class="overview-section">
                         <h4><i class="fas fa-clock"></i> Next 24 Hours</h4>
-                        <div class="timeline">
-                            <div class="timeline-item ice">
-                                <div class="timeline-time">NOW - 8 AM</div>
-                                <div class="timeline-desc">Freezing rain continues</div>
-                            </div>
-                            <div class="timeline-item ice">
-                                <div class="timeline-time">SUN 8 AM - NOON</div>
-                                <div class="timeline-desc">Ice accumulation peaks</div>
-                            </div>
-                            <div class="timeline-item end">
-                                <div class="timeline-time">SUN AFTERNOON</div>
-                                <div class="timeline-desc">Precip tapers off</div>
-                            </div>
-                            <div class="timeline-item cold">
-                                <div class="timeline-time">SUN NIGHT</div>
-                                <div class="timeline-desc">Temps plunge, teens</div>
-                            </div>
-                            <div class="timeline-item cold">
-                                <div class="timeline-time">MON MORNING</div>
-                                <div class="timeline-desc">Single digits, wind chill -5 to -15</div>
-                            </div>
-                            <div class="timeline-item cold">
-                                <div class="timeline-time">MON-TUE</div>
-                                <div class="timeline-desc">Dangerous cold persists</div>
-                            </div>
+                        <div class="timeline" id="overview-timeline">
+                            <div class="timeline-item"><i class="fas fa-spinner fa-spin"></i> Loading forecast...</div>
                         </div>
                     </div>
                 </div>
@@ -6113,6 +6081,147 @@ STAY HOME. STAY WARM. STAY SAFE, BUTTS.
         // Fetch accumulation on load and every 30 minutes
         fetchAccumulationForecast();
         setInterval(fetchAccumulationForecast, 1800000);
+
+        // ============================================
+        // DYNAMIC TICKER & STORM OVERVIEW
+        // ============================================
+        async function fetchAlertsAndForecast() {
+            try {
+                // Fetch NWS alerts for Nashville area
+                const alertsRes = await fetch('https://api.weather.gov/alerts/active?point=36.1627,-86.7816', {
+                    headers: { 'User-Agent': 'RipperRadar/1.0' }
+                });
+                const alertsData = await alertsRes.json();
+
+                // Fetch NWS forecast
+                const forecastRes = await fetch('https://api.weather.gov/gridpoints/OHX/52,53/forecast', {
+                    headers: { 'User-Agent': 'RipperRadar/1.0' }
+                });
+                const forecastData = await forecastRes.json();
+
+                // Fetch current conditions
+                const currentRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.NASHVILLE_LAT}&longitude=${CONFIG.NASHVILLE_LON}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph`);
+                const currentData = await currentRes.json();
+
+                updateTicker(alertsData.features || [], forecastData.properties?.periods || [], currentData.current);
+                updateStormOverview(alertsData.features || [], forecastData.properties?.periods || [], currentData.current);
+
+            } catch (error) {
+                console.error('Alert/forecast fetch error:', error);
+                // Fallback ticker
+                document.getElementById('ticker-track').innerHTML = `
+                    <span class="ticker-item"><i class="fas fa-exclamation-triangle"></i> CHECK LOCAL NWS FOR LATEST ALERTS</span>
+                    <span class="ticker-item"><i class="fas fa-thermometer-empty"></i> DANGEROUS COLD EXPECTED - STAY WARM</span>
+                `;
+            }
+        }
+
+        function updateTicker(alerts, forecast, current) {
+            const tickerEl = document.getElementById('ticker-track');
+            const items = [];
+
+            // Add active alerts
+            alerts.forEach(alert => {
+                const event = alert.properties?.event || '';
+                const headline = alert.properties?.headline || event;
+                if (event) {
+                    items.push(`<span class="ticker-item"><i class="fas fa-exclamation-triangle"></i> ${headline.toUpperCase()}</span>`);
+                }
+            });
+
+            // Add forecast-based items
+            if (forecast.length > 0) {
+                const tonight = forecast[0];
+                const tomorrow = forecast[1];
+                if (tonight?.temperature <= 15) {
+                    items.push(`<span class="ticker-item"><i class="fas fa-thermometer-empty"></i> ${tonight.name?.toUpperCase()}: ${tonight.temperature}°F - ${tonight.shortForecast?.toUpperCase()}</span>`);
+                }
+                if (tomorrow?.temperature <= 20) {
+                    items.push(`<span class="ticker-item"><i class="fas fa-snowflake"></i> ${tomorrow.name?.toUpperCase()}: HIGH ${tomorrow.temperature}°F</span>`);
+                }
+                // Check for extreme cold
+                forecast.slice(0, 4).forEach(period => {
+                    if (period.temperature <= 5) {
+                        items.push(`<span class="ticker-item"><i class="fas fa-icicles"></i> EXTREME COLD: ${period.name?.toUpperCase()} LOW ${period.temperature}°F</span>`);
+                    }
+                });
+            }
+
+            // Add current conditions if cold
+            if (current?.temperature_2m <= 20) {
+                items.push(`<span class="ticker-item"><i class="fas fa-temperature-low"></i> CURRENT: ${Math.round(current.temperature_2m)}°F (FEELS ${Math.round(current.apparent_temperature)}°F)</span>`);
+            }
+
+            // Fallback if no items
+            if (items.length === 0) {
+                items.push(`<span class="ticker-item"><i class="fas fa-cloud-sun"></i> NO ACTIVE SEVERE WEATHER ALERTS</span>`);
+            }
+
+            tickerEl.innerHTML = items.join('');
+        }
+
+        function updateStormOverview(alerts, forecast, current) {
+            // Update timestamp
+            const timeEl = document.getElementById('overview-time');
+            if (timeEl) timeEl.textContent = `(${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })})`;
+
+            // Update warnings
+            const warningsEl = document.getElementById('overview-warnings');
+            if (warningsEl) {
+                if (alerts.length > 0) {
+                    warningsEl.innerHTML = alerts.slice(0, 4).map(alert => {
+                        const event = alert.properties?.event || 'Alert';
+                        const expires = alert.properties?.expires ? new Date(alert.properties.expires).toLocaleString('en-US', { weekday: 'short', hour: 'numeric' }) : '';
+                        return `<li><i class="fas fa-check"></i> ${event}${expires ? ` (until ${expires})` : ''}</li>`;
+                    }).join('');
+                } else {
+                    warningsEl.innerHTML = '<li><i class="fas fa-check"></i> No active severe weather alerts</li>';
+                }
+            }
+
+            // Update current conditions
+            const conditionsEl = document.getElementById('overview-conditions');
+            if (conditionsEl && current) {
+                const temp = Math.round(current.temperature_2m);
+                const feels = Math.round(current.apparent_temperature);
+                const wind = Math.round(current.wind_speed_10m);
+                const conditions = [];
+
+                conditions.push(`<li><i class="fas fa-check"></i> Temperature: ${temp}°F (feels like ${feels}°F)</li>`);
+                conditions.push(`<li><i class="fas fa-check"></i> Wind: ${wind} mph</li>`);
+
+                if (temp <= 32) conditions.push(`<li><i class="fas fa-check"></i> Roads: ICY/HAZARDOUS - avoid travel</li>`);
+                else if (temp <= 40) conditions.push(`<li><i class="fas fa-check"></i> Roads: Use caution, slick spots possible</li>`);
+                else conditions.push(`<li><i class="fas fa-check"></i> Roads: Improving conditions</li>`);
+
+                if (feels <= 0) conditions.push(`<li><i class="fas fa-check"></i> DANGEROUS WIND CHILL - limit exposure</li>`);
+                else if (feels <= 15) conditions.push(`<li><i class="fas fa-check"></i> Cold wind chill - dress warmly</li>`);
+
+                conditionsEl.innerHTML = conditions.join('');
+            }
+
+            // Update timeline
+            const timelineEl = document.getElementById('overview-timeline');
+            if (timelineEl && forecast.length > 0) {
+                timelineEl.innerHTML = forecast.slice(0, 6).map(period => {
+                    let itemClass = '';
+                    if (period.temperature <= 10) itemClass = 'cold';
+                    else if (period.temperature <= 32) itemClass = 'ice';
+                    else itemClass = 'end';
+
+                    return `
+                        <div class="timeline-item ${itemClass}">
+                            <div class="timeline-time">${period.name?.toUpperCase()}</div>
+                            <div class="timeline-desc">${period.temperature}°F - ${period.shortForecast}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Fetch alerts on load and every 10 minutes
+        fetchAlertsAndForecast();
+        setInterval(fetchAlertsAndForecast, 600000);
 
         // NES Map Modal Functions
         function showNESMap() {
