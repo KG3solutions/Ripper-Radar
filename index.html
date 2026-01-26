@@ -40,25 +40,25 @@
 
     <style>
         :root {
-            /* 💖 Ripper Radar - MAGNIFICENT PINK Theme */
-            --bg-void: #8b0040;
-            --bg-primary: #a00050;
-            --bg-secondary: #c00060;
-            --bg-panel: #d00070;
-            --bg-panel-header: #ff1493;
-            --border-dim: #ffb6c1;
-            --border-color: #fff;
-            --text-primary: #fff;
-            --text-secondary: #ffebef;
-            --text-muted: #ffd6e0;
-            /* NEON PINK - Maximum Glow */
-            --neon-pink: #ff1493;
-            --neon-pink-bright: #ff69b4;
-            --neon-pink-hot: #ff007f;
-            --accent-green: #ff1493;
-            --accent-green-dim: #ff69b4;
-            --accent-leaf: #ff1493;
-            --accent-herb: #ff69b4;
+            /* ❄️ Ripper Radar - ICY BLUE FROSTED THEME */
+            --bg-void: #0a1420;
+            --bg-primary: #1a2837;
+            --bg-secondary: #2a3847;
+            --bg-panel: #344857;
+            --bg-panel-header: #4a90e2;
+            --border-dim: #5aa3f0;
+            --border-color: #7bb3f0;
+            --text-primary: #ffffff;
+            --text-secondary: #e6f3ff;
+            --text-muted: #b3d9ff;
+            /* ICY BLUE - Frosted Glow */
+            --neon-pink: #4a90e2;
+            --neon-pink-bright: #5aa3f0;
+            --neon-pink-hot: #3a80d2;
+            --accent-green: #5aa3f0;
+            --accent-green-dim: #7bb3f0;
+            --accent-leaf: #5aa3f0;
+            --accent-herb: #7bb3f0;
             /* Earth tones */
             --accent-amber: #ffb347;
             --accent-gold: #ffd700;
@@ -70,10 +70,10 @@
             --accent-ice: #87ceeb;
             --accent-purple: #da70d6;
             --accent-bobby: #ff8c00;
-            /* NEON GLOWS */
-            --glow-pink: 0 0 20px rgba(255, 20, 147, 0.6), 0 0 40px rgba(255, 20, 147, 0.3), 0 0 60px rgba(255, 20, 147, 0.1);
-            --glow-pink-subtle: 0 0 10px rgba(255, 20, 147, 0.4);
-            --glow-green: 0 0 15px rgba(255, 20, 147, 0.5);
+            /* ICY GLOWS */
+            --glow-pink: 0 0 20px rgba(74, 144, 226, 0.6), 0 0 40px rgba(74, 144, 226, 0.3), 0 0 60px rgba(74, 144, 226, 0.1);
+            --glow-pink-subtle: 0 0 10px rgba(74, 144, 226, 0.4);
+            --glow-green: 0 0 15px rgba(90, 163, 240, 0.5);
             --glow-cyan: 0 0 10px rgba(0, 255, 255, 0.4);
             --glow-red: 0 0 10px rgba(255, 107, 107, 0.4);
             --glow-amber: 0 0 10px rgba(255, 179, 71, 0.4);
@@ -100,7 +100,7 @@
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath fill='%23ff1493' fill-opacity='0.4' d='M30 5c-2 8-8 14-16 16 8 2 14 8 16 16 2-8 8-14 16-16-8-2-14-8-16-16z'/%3E%3C/svg%3E");
         }
 
-        /* 💖 Hot Pink Mist Effect Background */
+        /* ❄️ Icy Blue Frosted Effect Background */
         body::after {
             content: "";
             position: fixed;
@@ -110,20 +110,22 @@
             height: 100%;
             pointer-events: none;
             z-index: -1;
-            opacity: 0.12;
+            opacity: 0.15;
             background:
-                radial-gradient(ellipse at 20% 80%, rgba(255, 0, 80, 0.2) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 20%, rgba(255, 20, 100, 0.15) 0%, transparent 50%),
-                radial-gradient(ellipse at 50% 50%, rgba(255, 0, 60, 0.12) 0%, transparent 60%);
+                radial-gradient(ellipse at 20% 80%, rgba(74, 144, 226, 0.2) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(90, 163, 240, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(58, 128, 210, 0.12) 0%, transparent 60%);
+            backdrop-filter: blur(2px);
         }
 
         body {
             font-family: 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
-            background: linear-gradient(135deg, #ff1493 0%, #c71585 50%, #db7093 100%);
+            background: linear-gradient(135deg, #0a1420 0%, #1a2837 50%, #2a3847 100%);
             color: var(--text-primary);
             line-height: 1.4;
             min-height: 100vh;
             font-size: 13px;
+            backdrop-filter: blur(10px);
         }
 
         /* 💖 Animations - NEON PINK PULSE */
@@ -178,14 +180,15 @@
         .live-indicator.amber { background: var(--accent-amber); box-shadow: var(--glow-amber); }
         .live-indicator.cyan { background: var(--accent-cyan); box-shadow: var(--glow-cyan); }
 
-        /* 💖 Header - MAGNIFICENT PINK HEADER */
+        /* ❄️ Header - ICY FROSTED HEADER */
         .ops-header {
             position: sticky;
             top: 0;
             z-index: 1000;
-            background: linear-gradient(180deg, #ff69b4 0%, #ff1493 100%);
-            border-bottom: 4px solid #fff;
-            box-shadow: 0 4px 40px rgba(255, 255, 255, 0.4), 0 0 80px rgba(255, 20, 147, 0.5);
+            background: linear-gradient(180deg, rgba(74, 144, 226, 0.9) 0%, rgba(58, 128, 210, 0.95) 100%);
+            border-bottom: 4px solid rgba(123, 179, 240, 0.8);
+            box-shadow: 0 4px 40px rgba(74, 144, 226, 0.4), 0 0 80px rgba(90, 163, 240, 0.3);
+            backdrop-filter: blur(15px);
             padding: 12px 20px;
             display: flex;
             justify-content: space-between;
@@ -218,9 +221,9 @@
         }
 
         .ops-title h1::before {
-            content: "💖";
+            content: "❄️";
             font-size: 1.4rem;
-            filter: drop-shadow(0 0 10px rgba(255, 20, 147, 0.8));
+            filter: drop-shadow(0 0 10px rgba(74, 144, 226, 0.8));
         }
 
         .ops-badge {
@@ -309,11 +312,12 @@
             letter-spacing: 1px;
         }
 
-        /* 💖 Alert Ticker - MAGNIFICENT PINK TICKER */
+        /* ❄️ Alert Ticker - ICY FROSTED TICKER */
         .alert-ticker {
-            background: linear-gradient(90deg, #c71585, #ff1493, #c71585);
-            border-bottom: 3px solid #fff;
-            box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
+            background: linear-gradient(90deg, rgba(58, 128, 210, 0.9), rgba(74, 144, 226, 0.9), rgba(58, 128, 210, 0.9));
+            border-bottom: 3px solid rgba(123, 179, 240, 0.8);
+            box-shadow: 0 4px 20px rgba(74, 144, 226, 0.3);
+            backdrop-filter: blur(10px);
             padding: 10px 0;
             overflow: hidden;
         }
@@ -353,26 +357,27 @@
             margin: 0 auto;
         }
 
-        /* 💖 Panel Base - MAGNIFICENT PINK PANELS */
+        /* ❄️ Panel Base - ICY FROSTED PANELS */
         .panel {
-            background: linear-gradient(145deg, #ff1493 0%, #c70064 100%);
-            border: 3px solid #ff69b4;
+            background: linear-gradient(145deg, rgba(52, 72, 87, 0.9) 0%, rgba(26, 40, 55, 0.95) 100%);
+            border: 3px solid rgba(90, 163, 240, 0.6);
             border-radius: 8px;
             position: relative;
             transition: all 0.3s ease;
             overflow: hidden;
-            box-shadow: 0 0 30px rgba(255, 20, 147, 0.7), 0 0 60px rgba(255, 20, 147, 0.4);
+            box-shadow: 0 0 30px rgba(74, 144, 226, 0.4), 0 0 60px rgba(90, 163, 240, 0.2);
+            backdrop-filter: blur(10px);
             animation: panel-glow 3s ease-in-out infinite;
         }
 
         @keyframes panel-glow {
-            0%, 100% { box-shadow: 0 0 30px rgba(255, 20, 147, 0.7), 0 0 60px rgba(255, 20, 147, 0.4); }
-            50% { box-shadow: 0 0 50px rgba(255, 105, 180, 0.9), 0 0 100px rgba(255, 20, 147, 0.6); }
+            0%, 100% { box-shadow: 0 0 30px rgba(74, 144, 226, 0.4), 0 0 60px rgba(90, 163, 240, 0.2); }
+            50% { box-shadow: 0 0 50px rgba(90, 163, 240, 0.6), 0 0 100px rgba(74, 144, 226, 0.3); }
         }
 
         .panel:hover {
-            box-shadow: 0 0 60px rgba(255, 105, 180, 1), 0 0 120px rgba(255, 20, 147, 0.7);
-            border-color: #fff;
+            box-shadow: 0 0 60px rgba(90, 163, 240, 0.8), 0 0 120px rgba(74, 144, 226, 0.5);
+            border-color: rgba(123, 179, 240, 0.9);
             transform: translateY(-2px);
         }
 
@@ -383,18 +388,19 @@
             left: 0;
             right: 0;
             height: 4px;
-            background: linear-gradient(90deg, #fff, #ffb6c1, #fff);
+            background: linear-gradient(90deg, rgba(123, 179, 240, 0.8), rgba(90, 163, 240, 0.9), rgba(123, 179, 240, 0.8));
             opacity: 1;
         }
 
         .panel-header {
-            background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+            background: linear-gradient(135deg, rgba(74, 144, 226, 0.9) 0%, rgba(58, 128, 210, 0.95) 100%);
             padding: 10px 14px;
-            border-bottom: 2px solid #ffb6c1;
+            border-bottom: 2px solid rgba(90, 163, 240, 0.7);
             display: flex;
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
         }
 
         .panel-title {
