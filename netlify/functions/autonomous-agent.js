@@ -31,6 +31,33 @@ function categorize(content) {
   return 'general';
 }
 
+// Fetch web content via Jina Reader (renders JavaScript, works for Twitter/X)
+async function fetchWithJina(url) {
+  try {
+    const response = await fetch(`https://r.jina.ai/${url}`, {
+      headers: {
+        'Accept': 'text/plain'
+      }
+    });
+    if (!response.ok) return null;
+    const text = await response.text();
+    // Truncate to avoid token limits
+    return text.substring(0, 8000);
+  } catch (e) {
+    console.error('Jina fetch error:', e);
+    return null;
+  }
+}
+
+// Key Nashville sources for research
+const NASHVILLE_SOURCES = {
+  nesOutages: 'https://x.com/NESpower',
+  nashSevereWx: 'https://x.com/NashSevereWx',
+  wsmv: 'https://www.wsmv.com/weather/',
+  wkrn: 'https://www.wkrn.com/weather-headlines/',
+  newschannel5: 'https://www.newschannel5.com/weather'
+};
+
 async function fetchDiscordMessages(token, channelId, limit = 30) {
   const response = await fetch(
     `https://discord.com/api/v10/channels/${channelId}/messages?limit=${limit}`,
@@ -265,6 +292,14 @@ CAPABILITIES:
 1. ANSWER QUESTIONS - about weather, the dashboard, Nashville, the storm, etc.
 2. MAKE WEBSITE CHANGES - fix bugs, add features, update text, tweak styling
 3. CHAT - just respond to comments, jokes, or conversation
+4. RESEARCH - fetch live data from Twitter/news to answer questions accurately
+
+RESEARCH SOURCES AVAILABLE (use "research" action to fetch):
+- nesOutages: @NESpower Twitter - official NES outage updates
+- nashSevereWx: @NashSevereWx Twitter - Nashville severe weather
+- wsmv: WSMV weather page
+- wkrn: WKRN weather headlines
+- newschannel5: NewsChannel 5 weather
 
 RULES FOR CODE CHANGES:
 - Only make SAFE changes - text updates, styling tweaks, small bug fixes, adding simple features
@@ -341,6 +376,13 @@ If you can't do something:
   "discordResponse": "Explanation to user"
 }
 
+If you need to research before answering (e.g., "what's NES saying about outages?"):
+{
+  "action": "research",
+  "sources": ["nesOutages", "nashSevereWx"],
+  "question": "What are the current outage numbers?"
+}
+
 If there's nothing to respond to (no mentions, nothing interesting):
 {
   "action": "no_action",
@@ -385,7 +427,41 @@ Review the conversation. Respond to direct mentions (>>>). For others, only resp
       });
     }
 
-    // 6. Execute decision
+    // 6. Handle research action (fetch data, then re-ask Claude)
+    if (decision.action === 'research' && decision.sources?.length > 0) {
+      const researchResults = {};
+
+      for (const source of decision.sources) {
+        const url = NASHVILLE_SOURCES[source];
+        if (url) {
+          const content = await fetchWithJina(url);
+          if (content) {
+            researchResults[source] = content;
+          }
+        }
+      }
+
+      // Re-ask Claude with the research data
+      const researchPrompt = `You asked to research: "${decision.question}"
+
+Here's what I found:
+
+${Object.entries(researchResults).map(([source, content]) => `=== ${source} ===\n${content}`).join('\n\n')}
+
+Now answer the original question based on this research. Respond with JSON:
+{
+  "action": "respond",
+  "discordResponse": "Your answer based on the research"
+}`;
+
+      const followUpResponse = await callClaude(ANTHROPIC_API_KEY, systemPrompt, researchPrompt);
+      const followUpMatch = followUpResponse.match(/\{[\s\S]*\}/);
+      if (followUpMatch) {
+        decision = JSON.parse(followUpMatch[0]);
+      }
+    }
+
+    // 7. Execute final decision
     const result = {
       status: decision.action,
       feedbackProcessed: newMessages.length,
@@ -421,7 +497,7 @@ Review the conversation. Respond to direct mentions (>>>). For others, only resp
       }
     }
 
-    // 7. Post response to Discord
+    // 8. Post response to Discord
     if (decision.discordResponse) {
       await postToDiscord(DISCORD_BOT_TOKEN, DISCORD_CHANNEL_ID, decision.discordResponse);
       result.discordResponse = decision.discordResponse;
