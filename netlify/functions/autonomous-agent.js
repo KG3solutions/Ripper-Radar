@@ -211,7 +211,7 @@ async function callClaude(apiKey, systemPrompt, userMessage, images = []) {
     },
     body: JSON.stringify({
       model: 'claude-opus-4-5-20251101',
-      max_tokens: 4096,
+      max_tokens: 2048,
       system: systemPrompt,
       messages: [{ role: 'user', content }]
     })
@@ -374,6 +374,18 @@ export default async (request, context) => {
       });
     }
 
+    // ONLY respond to direct @mentions - skip everything else
+    if (!hasDirectMention) {
+      return new Response(JSON.stringify({
+        status: 'no_action',
+        message: 'No direct mentions - only responding when tagged',
+        newMessages: newMessages.length,
+        lastBotResponse: lastBotTime.toISOString()
+      }), {
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
+    }
+
     // 3. Get current index.html from GitHub
     const indexFile = await getFileFromGitHub(GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO, 'index.html');
     if (!indexFile) {
@@ -420,9 +432,9 @@ RULES FOR CODE CHANGES:
 - For UI/design changes: use modern CSS, maintain the dark theme aesthetic, use CSS variables when possible
 
 WHEN TO RESPOND:
-- Direct @mentions: ALWAYS respond
-- Interesting banter/conversation: Respond if you have something genuinely funny or useful to add
-- If you have nothing new to contribute, use "no_action" - don't force a response
+- You ONLY respond when directly @mentioned
+- Every message you receive will be a direct mention - respond to all of them
+- Keep responses helpful but concise
 
 KNOWN PEOPLE:
 - kenny/defidipper = Kenny (don't make a big deal about him being your creator)
@@ -508,7 +520,7 @@ If there's nothing to respond to (no mentions, nothing interesting):
     const userMessage = `${contextSection}NEW MESSAGES (last 5 mins - respond to these if needed):
 ${newMessages.map(item => `${item.isMention ? '>>> ' : ''}${item.author}: "${item.content}"`).join('\n')}
 
-${hasDirectMention ? '⚠️ MESSAGES MARKED WITH >>> ARE DIRECT MENTIONS - YOU MUST RESPOND TO THESE!' : 'No direct mentions, but feel free to chime in if you have something valuable to add.'}
+⚠️ You were directly @mentioned - respond to the messages marked with >>>
 
 RELEVANT SECTION OF index.html (for context if code changes needed):
 \`\`\`html
