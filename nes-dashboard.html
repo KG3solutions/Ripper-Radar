@@ -798,7 +798,7 @@
             poles: '<strong style="color: #8b5cf6;">&#128268;</strong> 280+ broken poles reported. Ice accumulation caused trees to snap and bring down power lines.',
             linemen: '<strong style="color: #06b6d4;">&#128119;</strong> NES ramped from 160 to 900 workers. Faced criticism Monday for only having ~300 vs MTE\'s 450+.',
             overview: '<strong style="color: #60a5fa;">&#128202;</strong> NES had 10x the outages of MTE but started with fewer crews. 48.9% of NES customers lost power vs 6.4% of MTE.',
-            linemenRelative: '<strong style="color: #60a5fa;">&#127919; STAFFING ANALYSIS:</strong> Two key metrics: (1) Linemen per 1,000 outages - MTE had 30 vs NES at just 1.8 on Monday AM (16x difference). (2) Customers per lineman - NES started at 1,437 vs MTE\'s 115. Even by Thursday, NES was still at 256 vs MTE\'s 38.',
+            linemenRelative: '<strong style="color: #60a5fa;">&#127919; COOPERATIVE vs MUNICIPAL:</strong> All three cooperatives (MTE, CEMC, Dickson) outperformed NES. Why? Mutual aid agreements, pre-positioned crews, and lower customer-to-lineman ratios. Dickson had 200 customers/lineman vs NES at 2,937 on Sunday. The cooperative model works.',
             linemenOutage: '<strong style="color: #60a5fa;">&#128119;</strong> Alternative view of the same metric on log scale. MTE consistently had 10-100x more linemen per thousand outages throughout the event.',
             lineMiles: '<strong style="color: #60a5fa;">&#128268;</strong> MTE maintains 12,000 miles (2x NES) but deployed more linemen per 100 miles of infrastructure.',
             custPerLineman: '<strong style="color: #60a5fa;">&#128101; STAFFING RATIO:</strong> NES has <strong>767 customers per lineman</strong> vs MTE with just 51. That\'s 15x more customers each NES lineman has to cover. CEMC falls in between at 117. This baseline staffing explains why NES struggles during emergencies.',
@@ -1105,10 +1105,12 @@
             // Linemen per 1,000 outages over time (linemen / outages_in_thousands)
             // NES: Started understaffed, slowly ramped up crews
             const nesRatio = [160/230, 300/170, 500/157, 700/130, 900/108, 900/85];
-            // MTE: Well-staffed from start, outages dropped fast
+            // MTE: Well-staffed from start, outages dropped fast (cooperative)
             const mteRatio = [200/23, 450/15, 550/8, 607/2.4, 600/0.79, 600/0.3];
-            // CEMC: Moderate staffing, decent recovery
-            const cemcRatio = [100/17.5, 150/12, 180/9, 200/5, 210/2.5, 215/1.2];
+            // CEMC: Cooperative with mutual aid (35K peak, 130K customers)
+            const cemcRatio = [80/35, 120/29, 150/24, 180/12, 200/6.8, 210/5.5];
+            // Dickson Electric: Small cooperative, fast response (20K peak, 30K customers)
+            const dicksonRatio = [80/20, 120/15, 140/12, 150/9, 150/7, 150/5];
 
             const traces = [
                 {
@@ -1122,7 +1124,7 @@
                     hovertemplate: 'NES<br>%{x}<br>%{y:.1f} linemen/1K outages<extra></extra>'
                 },
                 {
-                    name: 'MTE',
+                    name: 'MTE (Co-op)',
                     x: days,
                     y: mteRatio,
                     type: 'scatter',
@@ -1132,7 +1134,7 @@
                     hovertemplate: 'MTE<br>%{x}<br>%{y:.1f} linemen/1K outages<extra></extra>'
                 },
                 {
-                    name: 'CEMC',
+                    name: 'CEMC (Co-op)',
                     x: days,
                     y: cemcRatio,
                     type: 'scatter',
@@ -1140,6 +1142,16 @@
                     line: { color: '#f59e0b', width: 3 },
                     marker: { size: 10, symbol: 'square' },
                     hovertemplate: 'CEMC<br>%{x}<br>%{y:.1f} linemen/1K outages<extra></extra>'
+                },
+                {
+                    name: 'Dickson (Co-op)',
+                    x: days,
+                    y: dicksonRatio,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: '#8b5cf6', width: 3 },
+                    marker: { size: 10, symbol: 'triangle-up' },
+                    hovertemplate: 'Dickson<br>%{x}<br>%{y:.1f} linemen/1K outages<extra></extra>'
                 }
             ];
 
@@ -1273,12 +1285,14 @@
             const days = ['Sunday', 'Monday AM', 'Monday PM', 'Tuesday', 'Wednesday', 'Thursday'];
 
             // Customers per lineman over time (total customers / linemen deployed)
-            // NES: 230K customers
-            const nesCustPerLineman = [230000/160, 230000/300, 230000/500, 230000/700, 230000/900, 230000/900];
-            // MTE: 23K customers
-            const mteCustPerLineman = [23000/200, 23000/450, 23000/550, 23000/607, 23000/600, 23000/600];
-            // CEMC: 17.5K customers
-            const cemcCustPerLineman = [17500/100, 17500/150, 17500/180, 17500/200, 17500/210, 17500/215];
+            // NES: 470K customers (municipal utility)
+            const nesCustPerLineman = [470000/160, 470000/300, 470000/500, 470000/700, 470000/900, 470000/900];
+            // MTE: 345K customers (cooperative)
+            const mteCustPerLineman = [345000/200, 345000/450, 345000/550, 345000/607, 345000/600, 345000/600];
+            // CEMC: 130K customers (cooperative)
+            const cemcCustPerLineman = [130000/80, 130000/120, 130000/150, 130000/180, 130000/200, 130000/210];
+            // Dickson: 30K customers (cooperative) - best ratio
+            const dicksonCustPerLineman = [30000/80, 30000/120, 30000/140, 30000/150, 30000/150, 30000/150];
 
             const traces = [
                 {
@@ -1292,7 +1306,7 @@
                     hovertemplate: 'NES<br>%{x}<br>%{y:.0f} customers/lineman<extra></extra>'
                 },
                 {
-                    name: 'MTE',
+                    name: 'MTE (Co-op)',
                     x: days,
                     y: mteCustPerLineman,
                     type: 'scatter',
@@ -1302,7 +1316,7 @@
                     hovertemplate: 'MTE<br>%{x}<br>%{y:.0f} customers/lineman<extra></extra>'
                 },
                 {
-                    name: 'CEMC',
+                    name: 'CEMC (Co-op)',
                     x: days,
                     y: cemcCustPerLineman,
                     type: 'scatter',
@@ -1310,6 +1324,16 @@
                     line: { color: '#f59e0b', width: 3 },
                     marker: { size: 10, symbol: 'square' },
                     hovertemplate: 'CEMC<br>%{x}<br>%{y:.0f} customers/lineman<extra></extra>'
+                },
+                {
+                    name: 'Dickson (Co-op)',
+                    x: days,
+                    y: dicksonCustPerLineman,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: '#8b5cf6', width: 3 },
+                    marker: { size: 10, symbol: 'triangle-up' },
+                    hovertemplate: 'Dickson<br>%{x}<br>%{y:.0f} customers/lineman<extra></extra>'
                 }
             ];
 
@@ -1342,8 +1366,8 @@
                 annotations: [
                     {
                         x: 'Sunday',
-                        y: 1437,
-                        text: '1,437',
+                        y: 2937,
+                        text: 'NES: 2,937',
                         showarrow: true,
                         arrowhead: 2,
                         arrowcolor: '#ef4444',
@@ -1355,23 +1379,23 @@
                     },
                     {
                         x: 'Thursday',
-                        y: 256,
-                        text: '256',
+                        y: 522,
+                        text: 'NES: 522',
                         showarrow: true,
                         arrowhead: 2,
                         arrowcolor: '#ef4444',
                         font: { size: mobile ? 9 : 10, color: '#ef4444' },
-                        ax: -25,
-                        ay: -25,
+                        ax: -30,
+                        ay: -30,
                         bgcolor: '#1e293b',
                         borderpad: 3
                     },
                     {
                         x: 'Thursday',
-                        y: 38,
-                        text: 'MTE: 38',
+                        y: 200,
+                        text: 'Dickson: 200',
                         showarrow: false,
-                        font: { size: mobile ? 8 : 9, color: '#22c55e' },
+                        font: { size: mobile ? 8 : 9, color: '#8b5cf6' },
                         yshift: 15
                     }
                 ],
