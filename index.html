@@ -263,6 +263,42 @@
             animation: none;
         }
 
+        .nes-dashboard-badge {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: #fff;
+            padding: 4px 12px;
+            font-size: 0.6rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-radius: 12px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            animation: nesPulse 3s ease-in-out infinite;
+        }
+
+        .nes-dashboard-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+            background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+            animation: none;
+        }
+
+        @keyframes nesPulse {
+            0%, 100% {
+                opacity: 1;
+                box-shadow: 0 0 5px rgba(239, 68, 68, 0.3);
+            }
+            50% {
+                opacity: 0.8;
+                box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+            }
+        }
+
         @keyframes subscribePulse {
             0%, 100% {
                 opacity: 1;
@@ -3598,6 +3634,7 @@
             <h1><i class="fas fa-satellite-dish"></i> RIPPER RADAR // NASHVILLE</h1>
             <span class="ops-badge">ACTIVE EVENT</span>
             <a href="subscribe.html" class="subscribe-badge" title="Get Push Alerts"><i class="fas fa-bell"></i> Subscribe to Alerts</a>
+            <a href="nes-dashboard.html" class="nes-dashboard-badge" title="NES Storm Dashboard"><i class="fas fa-bolt"></i> NES Dashboard</a>
         </div>
         <div class="ops-clocks">
             <div class="clock-block">

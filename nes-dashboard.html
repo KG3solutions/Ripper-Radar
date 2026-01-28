@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NES Storm Dashboard | RIPPER RADAR</title>
+
+    <!-- Open Graph / Social Sharing Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ripper-radar.netlify.app/nes-dashboard">
+    <meta property="og:title" content="NES Storm Dashboard | RIPPER RADAR">
+    <meta property="og:description" content="Nashville Electric Service storm impact analysis - outages, restoration progress, and utility performance comparison.">
+    <meta property="og:image" content="https://ripper-radar.netlify.app/assets/ripper-radar-icon.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="NES Storm Dashboard | RIPPER RADAR">
+    <meta name="twitter:description" content="Nashville Electric Service storm impact analysis - outages, restoration progress, and utility performance comparison.">
+
+    <!-- iOS App Appearance -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NES Dashboard">
+    <link rel="apple-touch-icon" href="assets/ripper-radar-icon.png">
+
+    <!-- Plotly.js for charts -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #0f172a;
+            color: #f1f5f9;
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 12px;
+        }
+
+        @media (min-width: 600px) {
+            .container {
+                padding: 24px;
+            }
+        }
+
+        /* Header */
+        .header {
+            margin-bottom: 16px;
+        }
+
+        .header-tags {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .storm-badge {
+            padding: 5px 12px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .date-label {
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .back-link {
+            font-size: 11px;
+            color: #60a5fa;
+            text-decoration: none;
+            margin-left: auto;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        @media (min-width: 600px) {
+            h1 {
+                font-size: 28px;
+            }
+        }
+
+        /* Section Toggle */
+        .section-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding: 4px;
+            background-color: #1e293b;
+            border-radius: 10px;
+            border: 1px solid #334155;
+        }
+
+        .section-btn {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            color: #94a3b8;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        @media (min-width: 600px) {
+            .section-btn {
+                font-size: 14px;
+            }
+        }
+
+        .section-btn.active-outages {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .section-btn.active-performance {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        @media (min-width: 600px) {
+            .stats-grid {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 12px;
+            }
+        }
+
+        .stat-card {
+            padding: 12px 8px;
+            background-color: #1e293b;
+            border-radius: 10px;
+            border: 2px solid #334155;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        @media (min-width: 600px) {
+            .stat-card {
+                padding: 16px;
+            }
+        }
+
+        .stat-card:hover {
+            border-color: #475569;
+        }
+
+        .stat-card.active {
+            border-color: var(--stat-color, #60a5fa);
+            background-color: #334155;
+            box-shadow: 0 4px 20px var(--stat-glow, rgba(96, 165, 250, 0.2));
+        }
+
+        .stat-icon {
+            font-size: 18px;
+            margin-bottom: 2px;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        @media (min-width: 600px) {
+            .stat-value {
+                font-size: 28px;
+            }
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #f1f5f9;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        @media (min-width: 600px) {
+            .stat-label {
+                font-size: 13px;
+            }
+        }
+
+        .stat-sublabel {
+            font-size: 9px;
+            color: #64748b;
+        }
+
+        @media (min-width: 600px) {
+            .stat-sublabel {
+                font-size: 11px;
+            }
+        }
+
+        .stat-tap {
+            margin-top: 6px;
+            font-size: 9px;
+            opacity: 0.8;
+        }
+
+        /* Linemen Banner (mobile) */
+        .linemen-banner {
+            margin-bottom: 12px;
+            padding: 12px 16px;
+            background-color: #1e293b;
+            border-radius: 10px;
+            border: 2px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .linemen-banner.active {
+            background-color: #334155;
+            border-color: #06b6d4;
+        }
+
+        .linemen-banner-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .linemen-banner-icon {
+            font-size: 20px;
+        }
+
+        .linemen-banner-text {
+            color: #f1f5f9;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .linemen-banner-subtext {
+            color: #64748b;
+            font-size: 10px;
+        }
+
+        .linemen-banner-value {
+            color: #06b6d4;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .linemen-banner-tap {
+            color: #06b6d4;
+            font-size: 9px;
+        }
+
+        /* Key Finding */
+        .key-finding {
+            padding: 12px 14px;
+            background: linear-gradient(135deg, #7f1d1d 0%, #1e293b 100%);
+            border-radius: 10px;
+            border: 1px solid #ef4444;
+            margin-bottom: 12px;
+        }
+
+        .key-finding-label {
+            font-size: 12px;
+            color: #fca5a5;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .key-finding-text {
+            font-size: 11px;
+            color: #f1f5f9;
+            line-height: 1.5;
+        }
+
+        @media (min-width: 600px) {
+            .key-finding-text {
+                font-size: 13px;
+            }
+        }
+
+        /* Comparison Stats */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        @media (min-width: 600px) {
+            .comparison-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .comparison-card {
+            padding: 10px;
+            background-color: #1e293b;
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
+
+        .comparison-label {
+            font-size: 10px;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+
+        .comparison-values {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .comparison-item {
+            text-align: center;
+        }
+
+        .comparison-value {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .comparison-value.nes-worse {
+            color: #ef4444;
+        }
+
+        .comparison-value.mte-better {
+            color: #22c55e;
+        }
+
+        .comparison-name {
+            font-size: 9px;
+            color: #94a3b8;
+        }
+
+        .comparison-vs {
+            font-size: 12px;
+            color: #475569;
+        }
+
+        /* Chart Navigation */
+        .chart-nav {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+        }
+
+        .chart-btn {
+            padding: 8px 10px;
+            background-color: #1e293b;
+            color: #94a3b8;
+            border: 2px solid #334155;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        @media (min-width: 600px) {
+            .chart-btn {
+                padding: 10px 14px;
+                font-size: 12px;
+            }
+        }
+
+        .chart-btn.active {
+            background-color: #334155;
+            color: #f1f5f9;
+            border-color: #60a5fa;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background-color: #0f172a;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+            margin-bottom: 12px;
+        }
+
+        .chart {
+            width: 100%;
+            height: 300px;
+        }
+
+        @media (min-width: 600px) {
+            .chart {
+                height: 420px;
+            }
+        }
+
+        .chart.performance {
+            height: 300px;
+        }
+
+        @media (min-width: 600px) {
+            .chart.performance {
+                height: 400px;
+            }
+        }
+
+        /* Context Box */
+        .context-box {
+            padding: 10px 12px;
+            background-color: #1e293b;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            font-size: 11px;
+            color: #94a3b8;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        @media (min-width: 600px) {
+            .context-box {
+                font-size: 12px;
+            }
+        }
+
+        .context-box strong {
+            color: inherit;
+        }
+
+        /* Mobile Hint */
+        .mobile-hint {
+            padding: 8px 10px;
+            background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%);
+            border-radius: 6px;
+            font-size: 9px;
+            color: #94a3b8;
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 10px;
+        }
+
+        /* Source */
+        .source {
+            text-align: center;
+            font-size: 9px;
+            color: #475569;
+        }
+
+        /* Hidden */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Desktop only */
+        .desktop-only {
+            display: none;
+        }
+
+        @media (min-width: 600px) {
+            .desktop-only {
+                display: block;
+            }
+        }
+
+        /* Mobile only */
+        .mobile-only {
+            display: block;
+        }
+
+        @media (min-width: 600px) {
+            .mobile-only {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-tags">
+                <span class="storm-badge">&#9889; Historic Ice Storm</span>
+                <span class="date-label">Jan 25-28, 2026</span>
+                <a href="/" class="back-link">&larr; Back to Ripper Radar</a>
+            </div>
+            <h1>NES Storm Dashboard</h1>
+        </div>
+
+        <!-- Section Toggle -->
+        <div class="section-toggle">
+            <button class="section-btn active-outages" id="btn-outages" onclick="switchSection('outages')">
+                &#128202; NES Outages
+            </button>
+            <button class="section-btn" id="btn-performance" onclick="switchSection('performance')">
+                &#128200; NES Performance
+            </button>
+        </div>
+
+        <!-- ============ OUTAGES SECTION ============ -->
+        <div id="section-outages">
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card" id="stat-main" onclick="switchOutageChart('main')" style="--stat-color: #ef4444; --stat-glow: rgba(239, 68, 68, 0.2);">
+                    <div class="stat-icon">&#128200;</div>
+                    <div class="stat-value" style="color: #ef4444;">230K</div>
+                    <div class="stat-label">Peak</div>
+                    <div class="stat-sublabel">Sun 3pm</div>
+                    <div class="stat-tap" style="color: #ef4444;">TAP &rarr;</div>
+                </div>
+                <div class="stat-card" id="stat-current" onclick="switchOutageChart('main')" style="--stat-color: #f59e0b; --stat-glow: rgba(245, 158, 11, 0.2);">
+                    <div class="stat-icon">&#9889;</div>
+                    <div class="stat-value" style="color: #f59e0b;">108K</div>
+                    <div class="stat-label">Current</div>
+                    <div class="stat-sublabel">Still out</div>
+                    <div class="stat-tap" style="color: #f59e0b;">TAP &rarr;</div>
+                </div>
+                <div class="stat-card" id="stat-restored" onclick="switchOutageChart('restored')" style="--stat-color: #22c55e; --stat-glow: rgba(34, 197, 94, 0.2);">
+                    <div class="stat-icon">&#10003;</div>
+                    <div class="stat-value" style="color: #22c55e;">122K</div>
+                    <div class="stat-label">Restored</div>
+                    <div class="stat-sublabel">Reconnected</div>
+                    <div class="stat-tap" style="color: #22c55e;">TAP &rarr;</div>
+                </div>
+                <div class="stat-card" id="stat-poles" onclick="switchOutageChart('poles')" style="--stat-color: #8b5cf6; --stat-glow: rgba(139, 92, 246, 0.2);">
+                    <div class="stat-icon">&#128268;</div>
+                    <div class="stat-value" style="color: #8b5cf6;">280+</div>
+                    <div class="stat-label">Poles</div>
+                    <div class="stat-sublabel">Broken</div>
+                    <div class="stat-tap" style="color: #8b5cf6;">TAP &rarr;</div>
+                </div>
+                <div class="stat-card desktop-only" id="stat-linemen" onclick="switchOutageChart('linemen')" style="--stat-color: #06b6d4; --stat-glow: rgba(6, 182, 212, 0.2);">
+                    <div class="stat-icon">&#128119;</div>
+                    <div class="stat-value" style="color: #06b6d4;">~900</div>
+                    <div class="stat-label">Crews</div>
+                    <div class="stat-sublabel">Deployed</div>
+                    <div class="stat-tap" style="color: #06b6d4;">TAP &rarr;</div>
+                </div>
+            </div>
+
+            <!-- Linemen Banner (mobile) -->
+            <div class="linemen-banner mobile-only" id="linemen-banner" onclick="switchOutageChart('linemen')">
+                <div class="linemen-banner-left">
+                    <span class="linemen-banner-icon">&#128119;</span>
+                    <div>
+                        <div class="linemen-banner-text">Line Workers</div>
+                        <div class="linemen-banner-subtext">From 8+ states</div>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div class="linemen-banner-value">~900</div>
+                    <div class="linemen-banner-tap">TAP &rarr;</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ PERFORMANCE SECTION ============ -->
+        <div id="section-performance" class="hidden">
+            <!-- Key Finding -->
+            <div class="key-finding">
+                <div class="key-finding-label">&#9888;&#65039; Key Finding</div>
+                <div class="key-finding-text">
+                    NES had <strong>200K more outages</strong> than MTE but started Monday with <strong>150 fewer linemen</strong>.
+                </div>
+            </div>
+
+            <!-- Comparison Stats -->
+            <div class="comparison-grid">
+                <div class="comparison-card">
+                    <div class="comparison-label">Outage Rate</div>
+                    <div class="comparison-values">
+                        <div class="comparison-item">
+                            <div class="comparison-value nes-worse">48.9%</div>
+                            <div class="comparison-name">NES</div>
+                        </div>
+                        <div class="comparison-vs">vs</div>
+                        <div class="comparison-item">
+                            <div class="comparison-value mte-better">6.4%</div>
+                            <div class="comparison-name">MTE</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="comparison-card">
+                    <div class="comparison-label">Mon Linemen</div>
+                    <div class="comparison-values">
+                        <div class="comparison-item">
+                            <div class="comparison-value nes-worse">300</div>
+                            <div class="comparison-name">NES</div>
+                        </div>
+                        <div class="comparison-vs">vs</div>
+                        <div class="comparison-item">
+                            <div class="comparison-value mte-better">450</div>
+                            <div class="comparison-name">MTE</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="comparison-card">
+                    <div class="comparison-label">Wed Restored</div>
+                    <div class="comparison-values">
+                        <div class="comparison-item">
+                            <div class="comparison-value nes-worse">53%</div>
+                            <div class="comparison-name">NES</div>
+                        </div>
+                        <div class="comparison-vs">vs</div>
+                        <div class="comparison-item">
+                            <div class="comparison-value mte-better">97%</div>
+                            <div class="comparison-name">MTE</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="comparison-card">
+                    <div class="comparison-label">Cust/Lineman</div>
+                    <div class="comparison-values">
+                        <div class="comparison-item">
+                            <div class="comparison-value nes-worse">767</div>
+                            <div class="comparison-name">NES</div>
+                        </div>
+                        <div class="comparison-vs">vs</div>
+                        <div class="comparison-item">
+                            <div class="comparison-value mte-better">51</div>
+                            <div class="comparison-name">MTE</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart Navigation -->
+            <div class="chart-nav">
+                <button class="chart-btn active" id="perf-btn-overview" onclick="switchPerformanceChart('overview')">
+                    <span>&#128202;</span><span>Overview</span>
+                </button>
+                <button class="chart-btn" id="perf-btn-linemenRelative" onclick="switchPerformanceChart('linemenRelative')">
+                    <span>&#127919;</span><span>Linemen/Outage</span>
+                </button>
+                <button class="chart-btn" id="perf-btn-linemenOutage" onclick="switchPerformanceChart('linemenOutage')">
+                    <span>&#128119;</span><span>Over Time</span>
+                </button>
+                <button class="chart-btn" id="perf-btn-lineMiles" onclick="switchPerformanceChart('lineMiles')">
+                    <span>&#128268;</span><span>Line Miles</span>
+                </button>
+                <button class="chart-btn" id="perf-btn-restorationRate" onclick="switchPerformanceChart('restorationRate')">
+                    <span>&#9889;</span><span>Restoration</span>
+                </button>
+                <button class="chart-btn" id="perf-btn-timeline" onclick="switchPerformanceChart('timeline')">
+                    <span>&#128200;</span><span>Timeline</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Chart Container -->
+        <div class="chart-container">
+            <div id="chart-main" class="chart"></div>
+            <div id="chart-restored" class="chart hidden"></div>
+            <div id="chart-poles" class="chart hidden"></div>
+            <div id="chart-linemen" class="chart hidden"></div>
+            <div id="chart-overview" class="chart performance hidden"></div>
+            <div id="chart-linemenRelative" class="chart performance hidden"></div>
+            <div id="chart-linemenOutage" class="chart performance hidden"></div>
+            <div id="chart-lineMiles" class="chart performance hidden"></div>
+            <div id="chart-restorationRate" class="chart performance hidden"></div>
+            <div id="chart-timeline" class="chart performance hidden"></div>
+        </div>
+
+        <!-- Context Box -->
+        <div class="context-box" id="context-box">
+            <strong style="color: #ef4444;">&#128202;</strong> Largest outage in NES history &mdash; 230K peak, surpassing the 2020 derecho by 30K customers.
+        </div>
+
+        <!-- Mobile Hint -->
+        <div class="mobile-hint mobile-only">
+            <span>&#128269; Pinch zoom</span>
+            <span>&#8596;&#65039; Drag slider</span>
+            <span>&#128070; Tap values</span>
+        </div>
+
+        <!-- Source -->
+        <div class="source">
+            Data: NES, MTE, FOX 17, WSMV, WKRN, poweroutage.us &bull; Jan 25-28, 2026
+        </div>
+    </div>
+
+    <script>
+        // ============ STATE ============
+        let currentSection = 'outages';
+        let currentOutageChart = 'main';
+        let currentPerformanceChart = 'overview';
+
+        // ============ HELPER FUNCTIONS ============
+        function isMobile() {
+            return window.innerWidth < 600;
+        }
+
+        function getChartHeight(isPerformance = false) {
+            if (isMobile()) return 300;
+            return isPerformance ? 400 : 420;
+        }
+
+        // ============ DATA ============
+        const outageData = {
+            timestamps: [
+                '2026-01-25 09:00', '2026-01-25 10:00', '2026-01-25 12:00', '2026-01-25 15:00',
+                '2026-01-25 17:00', '2026-01-25 19:30', '2026-01-25 22:20',
+                '2026-01-26 07:00', '2026-01-26 16:20',
+                '2026-01-27 10:00', '2026-01-27 13:00', '2026-01-27 14:45', '2026-01-27 20:20', '2026-01-27 21:00',
+                '2026-01-28 06:00', '2026-01-28 12:00'
+            ],
+            values: [
+                188000, 200000, 200000, 230000,
+                215000, 210000, 184000,
+                170000, 157000,
+                132000, 132000, 120000, 112000, 110000,
+                108000, 108000
+            ]
+        };
+
+        const restoredData = {
+            timestamps: [
+                '2026-01-25 15:00', '2026-01-25 22:20',
+                '2026-01-26 07:00', '2026-01-26 16:20',
+                '2026-01-27 06:00', '2026-01-27 14:45', '2026-01-27 21:00',
+                '2026-01-28 06:00', '2026-01-28 12:00'
+            ],
+            values: [0, 46000, 60000, 73000, 98000, 110000, 120000, 122000, 122000]
+        };
+
+        const polesData = {
+            timestamps: [
+                '2026-01-25 18:00', '2026-01-25 22:00',
+                '2026-01-26 12:00', '2026-01-26 18:00',
+                '2026-01-27 10:00', '2026-01-27 13:00', '2026-01-27 21:00',
+                '2026-01-28 06:00', '2026-01-28 12:00'
+            ],
+            values: [76, 76, 150, 200, 216, 250, 280, 280, 280]
+        };
+
+        const linemenData = {
+            timestamps: [
+                '2026-01-25 07:00', '2026-01-25 19:00',
+                '2026-01-26 07:00', '2026-01-26 18:00',
+                '2026-01-27 07:00', '2026-01-27 14:00',
+                '2026-01-28 06:00', '2026-01-28 12:00'
+            ],
+            values: [160, 240, 300, 500, 700, 740, 900, 900]
+        };
+
+        // ============ CONTEXT MESSAGES ============
+        const contextMessages = {
+            main: '<strong style="color: #ef4444;">&#128202;</strong> Largest outage in NES history &mdash; 230K peak, surpassing the 2020 derecho by 30K customers.',
+            restored: '<strong style="color: #22c55e;">&#10003;</strong> Crews restored 122K customers since peak, working 14-16 hour shifts in continuous rotation.',
+            poles: '<strong style="color: #8b5cf6;">&#128268;</strong> 280+ broken poles reported. Ice accumulation caused trees to snap and bring down power lines.',
+            linemen: '<strong style="color: #06b6d4;">&#128119;</strong> NES ramped from 160 to 900 workers. Faced criticism Monday for only having ~300 vs MTE\'s 450+.',
+            overview: '<strong style="color: #60a5fa;">&#128202;</strong> NES had 10x the outages of MTE but started with fewer crews. 48.9% of NES customers lost power vs 6.4% of MTE.',
+            linemenRelative: '<strong style="color: #60a5fa;">&#127919; THE KEY METRIC:</strong> MTE had <strong>32x more linemen per 1,000 outages</strong> than NES on Monday. This shows actual staffing relative to the problem &mdash; not infrastructure size. NES was critically understaffed for their crisis.',
+            linemenOutage: '<strong style="color: #60a5fa;">&#128119;</strong> Same metric tracked over time. MTE consistently had 10-100x more linemen per thousand outages throughout the event.',
+            lineMiles: '<strong style="color: #60a5fa;">&#128268;</strong> MTE maintains 12,000 miles (2x NES) but deployed more linemen per 100 miles of infrastructure.',
+            restorationRate: '<strong style="color: #60a5fa;">&#9889;</strong> MTE hit 50% restored in ~24 hours; NES took 72+. By Wednesday: MTE 97% vs NES 53%.',
+            timeline: '<strong style="color: #60a5fa;">&#128200;</strong> MTE\'s outages dropped rapidly with steady crew. NES tripled crew but outages dropped slowly.'
+        };
+
+        // ============ SECTION SWITCHING ============
+        function switchSection(section) {
+            currentSection = section;
+
+            // Update buttons
+            document.getElementById('btn-outages').className = section === 'outages' ? 'section-btn active-outages' : 'section-btn';
+            document.getElementById('btn-performance').className = section === 'performance' ? 'section-btn active-performance' : 'section-btn';
+
+            // Show/hide sections
+            document.getElementById('section-outages').className = section === 'outages' ? '' : 'hidden';
+            document.getElementById('section-performance').className = section === 'performance' ? '' : 'hidden';
+
+            // Hide all charts
+            hideAllCharts();
+
+            // Show appropriate chart
+            if (section === 'outages') {
+                currentOutageChart = 'main';
+                showChart('main');
+                updateStatCards('main');
+                renderMainChart();
+            } else {
+                currentPerformanceChart = 'overview';
+                showChart('overview');
+                updatePerfButtons('overview');
+                renderOverviewChart();
+            }
+        }
+
+        function hideAllCharts() {
+            const charts = ['main', 'restored', 'poles', 'linemen', 'overview', 'linemenRelative', 'linemenOutage', 'lineMiles', 'restorationRate', 'timeline'];
+            charts.forEach(id => {
+                document.getElementById('chart-' + id).className = document.getElementById('chart-' + id).className.includes('performance') ? 'chart performance hidden' : 'chart hidden';
+            });
+        }
+
+        function showChart(id) {
+            const el = document.getElementById('chart-' + id);
+            el.className = el.className.replace(' hidden', '');
+            document.getElementById('context-box').innerHTML = contextMessages[id];
+        }
+
+        // ============ OUTAGE CHART SWITCHING ============
+        function switchOutageChart(chart) {
+            currentOutageChart = chart;
+            hideAllCharts();
+            showChart(chart);
+            updateStatCards(chart);
+
+            switch(chart) {
+                case 'main': renderMainChart(); break;
+                case 'restored': renderRestoredChart(); break;
+                case 'poles': renderPolesChart(); break;
+                case 'linemen': renderLinemenChart(); break;
+            }
+        }
+
+        function updateStatCards(activeChart) {
+            const cards = ['main', 'current', 'restored', 'poles', 'linemen'];
+            cards.forEach(id => {
+                const el = document.getElementById('stat-' + id);
+                if (el) {
+                    const isActive = (id === activeChart) || (id === 'main' && activeChart === 'main') || (id === 'current' && activeChart === 'main');
+                    el.className = isActive ? 'stat-card active' : 'stat-card';
+                    if (id === 'linemen' && !isMobile()) {
+                        el.className += ' desktop-only';
+                    }
+                }
+            });
+
+            // Update linemen banner
+            const banner = document.getElementById('linemen-banner');
+            if (banner) {
+                banner.className = activeChart === 'linemen' ? 'linemen-banner mobile-only active' : 'linemen-banner mobile-only';
+            }
+        }
+
+        // ============ PERFORMANCE CHART SWITCHING ============
+        function switchPerformanceChart(chart) {
+            currentPerformanceChart = chart;
+            hideAllCharts();
+            showChart(chart);
+            updatePerfButtons(chart);
+
+            switch(chart) {
+                case 'overview': renderOverviewChart(); break;
+                case 'linemenRelative': renderLinemenRelativeChart(); break;
+                case 'linemenOutage': renderLinemenOutageChart(); break;
+                case 'lineMiles': renderLineMilesChart(); break;
+                case 'restorationRate': renderRestorationRateChart(); break;
+                case 'timeline': renderTimelineChart(); break;
+            }
+        }
+
+        function updatePerfButtons(activeChart) {
+            const buttons = ['overview', 'linemenRelative', 'linemenOutage', 'lineMiles', 'restorationRate', 'timeline'];
+            buttons.forEach(id => {
+                const el = document.getElementById('perf-btn-' + id);
+                if (el) {
+                    el.className = id === activeChart ? 'chart-btn active' : 'chart-btn';
+                }
+            });
+        }
+
+        // ============ CHART RENDERING ============
+        const baseLayout = {
+            paper_bgcolor: '#0f172a',
+            plot_bgcolor: '#1e293b',
+            font: { family: 'Inter, system-ui, sans-serif', color: '#94a3b8' }
+        };
+
+        function renderMainChart() {
+            const mobile = isMobile();
+            const trace = {
+                x: outageData.timestamps,
+                y: outageData.values,
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#ef4444', width: mobile ? 2.5 : 3, shape: 'spline' },
+                marker: { color: '#ef4444', size: mobile ? 6 : 10, line: { color: '#1a1a2e', width: mobile ? 1 : 2 } },
+                fill: 'tozeroy',
+                fillcolor: 'rgba(239, 68, 68, 0.15)',
+                hovertemplate: '<b>%{x}</b><br>%{y:,.0f} customers<extra></extra>'
+            };
+
+            const layout = {
+                ...baseLayout,
+                title: {
+                    text: mobile ? '<b>Current Outages</b>' : '<b>NES Power Outages Over Time</b>',
+                    font: { family: 'Inter, system-ui', size: mobile ? 16 : 20, color: '#f1f5f9' }
+                },
+                xaxis: {
+                    gridcolor: '#334155',
+                    tickfont: { size: mobile ? 9 : 11 },
+                    tickangle: mobile ? -60 : -45,
+                    nticks: mobile ? 6 : 12,
+                    rangeslider: { visible: true, thickness: mobile ? 0.08 : 0.1 }
+                },
+                yaxis: {
+                    gridcolor: '#334155',
+                    tickformat: mobile ? '.2s' : ',.0f',
+                    tickfont: { size: mobile ? 9 : 11 },
+                    range: [0, 260000]
+                },
+                annotations: [{
+                    x: '2026-01-25 15:00',
+                    y: 230000,
+                    text: mobile ? '<b>230K</b>' : '<b>PEAK: 230,000</b>',
+                    showarrow: true,
+                    arrowhead: 2,
+                    arrowcolor: '#fbbf24',
+                    ax: mobile ? 25 : 50,
+                    ay: mobile ? -25 : -40,
+                    bordercolor: '#fbbf24',
+                    borderwidth: 1,
+                    bgcolor: '#1e293b',
+                    font: { size: mobile ? 10 : 12, color: '#fbbf24' }
+                }],
+                margin: mobile ? { t: 50, b: 70, l: 45, r: 15 } : { t: 70, b: 90, l: 70, r: 30 }
+            };
+
+            Plotly.newPlot('chart-main', [trace], layout, { responsive: true, displayModeBar: !mobile, scrollZoom: true, doubleClick: 'reset' });
+        }
+
+        function renderRestoredChart() {
+            const mobile = isMobile();
+            const trace = {
+                x: restoredData.timestamps,
+                y: restoredData.values,
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#22c55e', width: 3, shape: 'spline' },
+                marker: { color: '#22c55e', size: mobile ? 8 : 12, line: { color: '#1a1a2e', width: 2 } },
+                fill: 'tozeroy',
+                fillcolor: 'rgba(34, 197, 94, 0.2)',
+                hovertemplate: '<b>%{x}</b><br>%{y:,.0f} restored<extra></extra>'
+            };
+
+            const layout = {
+                ...baseLayout,
+                title: {
+                    text: '<b>Customers Restored</b><br><span style="font-size:12px;color:#94a3b8">Cumulative reconnections since peak</span>',
+                    font: { family: 'Inter, system-ui', size: mobile ? 16 : 20, color: '#22c55e' }
+                },
+                xaxis: { gridcolor: '#334155', tickfont: { size: mobile ? 9 : 11 }, tickangle: -45, rangeslider: { visible: true, thickness: 0.08 } },
+                yaxis: { gridcolor: '#334155', tickformat: ',.0f', tickfont: { size: mobile ? 9 : 11 } },
+                margin: mobile ? { t: 70, b: 70, l: 50, r: 15 } : { t: 80, b: 80, l: 70, r: 30 }
+            };
+
+            Plotly.newPlot('chart-restored', [trace], layout, { responsive: true, displayModeBar: !mobile, scrollZoom: true });
+        }
+
+        function renderPolesChart() {
+            const mobile = isMobile();
+            const trace = {
+                x: polesData.timestamps,
+                y: polesData.values,
+                type: 'bar',
+                marker: { color: polesData.values.map(v => v >= 280 ? '#8b5cf6' : '#a78bfa'), line: { color: '#7c3aed', width: 1 } },
+                hovertemplate: '<b>%{x}</b><br>%{y} poles reported<extra></extra>'
+            };
+
+            const layout = {
+                ...baseLayout,
+                title: {
+                    text: '<b>Broken Poles Reported</b><br><span style="font-size:12px;color:#94a3b8">Cumulative damage reports</span>',
+                    font: { family: 'Inter, system-ui', size: mobile ? 16 : 20, color: '#8b5cf6' }
+                },
+                xaxis: { gridcolor: '#334155', tickfont: { size: mobile ? 9 : 11 }, tickangle: -45 },
+                yaxis: { gridcolor: '#334155', tickfont: { size: mobile ? 9 : 11 }, range: [0, 320] },
+                margin: mobile ? { t: 70, b: 70, l: 45, r: 15 } : { t: 80, b: 80, l: 60, r: 30 }
+            };
+
+            Plotly.newPlot('chart-poles', [trace], layout, { responsive: true, displayModeBar: !mobile });
+        }
+
+        function renderLinemenChart() {
+            const mobile = isMobile();
+            const trace = {
+                x: linemenData.timestamps,
+                y: linemenData.values,
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#06b6d4', width: 3, shape: 'hv' },
+                marker: { color: '#06b6d4', size: mobile ? 8 : 12, symbol: 'diamond', line: { color: '#0e7490', width: 2 } },
+                fill: 'tozeroy',
+                fillcolor: 'rgba(6, 182, 212, 0.2)',
+                hovertemplate: '<b>%{x}</b><br>%{y} workers<extra></extra>'
+            };
+
+            const layout = {
+                ...baseLayout,
+                title: {
+                    text: '<b>Line Workers Deployed</b><br><span style="font-size:12px;color:#94a3b8">Crews from 8+ states assisting</span>',
+                    font: { family: 'Inter, system-ui', size: mobile ? 16 : 20, color: '#06b6d4' }
+                },
+                xaxis: { gridcolor: '#334155', tickfont: { size: mobile ? 9 : 11 }, tickangle: -45, rangeslider: { visible: true, thickness: 0.08 } },
+                yaxis: { gridcolor: '#334155', tickfont: { size: mobile ? 9 : 11 }, range: [0, 1000] },
+                annotations: [{
+                    x: '2026-01-26 07:00',
+                    y: 300,
+                    text: 'Criticized<br>for low staff',
+                    showarrow: true,
+                    arrowhead: 2,
+                    arrowcolor: '#f59e0b',
+                    ax: 40,
+                    ay: -40,
+                    font: { size: 10, color: '#f59e0b' },
+                    bgcolor: '#1e293b',
+                    bordercolor: '#f59e0b',
+                    borderwidth: 1
+                }],
+                margin: mobile ? { t: 70, b: 70, l: 45, r: 15 } : { t: 80, b: 80, l: 60, r: 30 }
+            };
+
+            Plotly.newPlot('chart-linemen', [trace], layout, { responsive: true, displayModeBar: !mobile, scrollZoom: true });
+        }
+
+        function renderOverviewChart() {
+            const mobile = isMobile();
+            const categories = ['Peak Outages<br>(thousands)', 'Current Outages<br>(thousands)', 'Linemen Mon', '% Customers<br>Affected'];
+
+            const traces = [
+                { name: 'NES', x: categories, y: [230, 108, 300, 48.9], type: 'bar', marker: { color: '#ef4444' } },
+                { name: 'MTE', x: categories, y: [23, 0.79, 450, 6.4], type: 'bar', marker: { color: '#22c55e' } },
+                { name: 'CEMC', x: categories, y: [15, 5.5, 150, 13.6], type: 'bar', marker: { color: '#f59e0b' } }
+            ];
+
+            const layout = {
+                ...baseLayout,
+                title: {
+                    text: '<b>Storm Impact Comparison</b><br><span style="font-size:12px;color:#94a3b8">NES vs Regional Utilities</span>',
+                    font: { family: 'Inter, system-ui', size: mobile ? 15 : 18, color: '#f1f5f9' }
+                },
+                barmode: 'group',
+                xaxis: { gridcolor: '#334155', tickfont: { size: mobile ? 9 : 11 } },
+                yaxis: { gridcolor: '#334155', tickfont: { size: mobile ? 9 : 11 } },
+                legend: { orientation: 'h', y: -0.2, x: 0.5, xanchor: 'center', font: { size: 11 } },
+                margin: mobile ? { t: 70, b: 80, l: 50, r: 20 } : { t: 80, b: 80, l: 60, r: 30 }
+            };
+
+            Plotly.newPlot('chart-overview', traces, layout, { responsive: true, displayModeBar: !mobile });
+        }
+
+        function renderLinemenRelativeChart() {
+            const mobile = isMobile();
+            const utilities = ['NES', 'MTE', 'CEMC'];
+            const linemenPer1kOutages = [300 / 170, 450 / 8, 150 / 12];
+
+            const trace = {
+                x: utilities,
+                y: linemenPer1kOutages,
+                type: 'bar',
+                marker: {
+                    color: ['#ef4444', '#22c55e', '#f59e0b'],
+                    line: { color: ['#dc2626', '#16a34a', '#d97706'], width: 2 }
+                },
+                text: linemenPer1kOutages.map(v => v.toFixed(1)),
+                textposition: 'outside',
+                textfont: { color: '#f1f5f9', size: mobile ? 12 : 14, family: 'Inter, system-ui' },
+                hovertemplate: '%{x}<br>%{y:.2f} linemen per 1K outages<extra></extra>'
+            };
+
+            const layout = {
+                ...baseLayout,
+                title: {
+                    text: '<b>Linemen per 1,000 Outages</b>',
+                    font: { family: 'Inter, system-ui', size: mobile ? 15 : 18, color: '#f1f5f9' },
+                    y: 0.95
+                },
+                xaxis: { gridcolor: '#334155', tickfont: { size: mobile ? 11 : 14, color: '#f1f5f9' } },
+                yaxis: {
+                    gridcolor: '#334155',
+                    tickfont: { size: mobile ? 9 : 11 },
+                    title: { text: 'Linemen per 1K Outages', font: { size: 10, color: '#64748b' } },
+                    range: [0, 75]
+                },
+                margin: mobile ? { t: 50, b: 50, l: 55, r: 20 } : { t: 60, b: 60, l: 60, r: 30 },
+                annotations: [
+                    {
+                        x: 'MTE',
+                        y: 56.25,
+                        text: '<b>32x more than NES</b>',
+                        showarrow: false,
+                        font: { size: mobile ? 10 : 12, color: '#22c55e' },
+                        yshift: mobile ? 35 : 45,
+                        bgcolor: '#1e293b',
+                        bordercolor: '#22c55e',
+                        borderwidth: 1,
+                        borderpad: 4
+                    },
+                    {
+                        x: 'NES',
+                        y: 1.76,
+                        text: '&#9888;&#65039; Understaffed',
+                        showarrow: false,
+                        font: { size: mobile ? 9 : 10, color: '#ef4444' },
+                        yshift: mobile ? 30 : 35,
+                        bgcolor: '#1e293b',
+                        bordercolor: '#ef4444',
+                        borderwidth: 1,
+                        borderpad: 3
+                    },
+                    {
+                        x: 'CEMC',
+                        y: 12.5,
+                        text: 'Above baseline',
+                        showarrow: false,
+                        font: { size: mobile ? 8 : 9, color: '#64748b' },
+                        yshift: mobile ? 25 : 30
+                    },
+                    {
+                        x: -0.4,
+                        y: 10,
+                        text: '~10 baseline',
+                        showarrow: false,
+                        font: { size: 9, color: '#64748b' },
+                        xanchor: 'left',
+                        yshift: -12
+                    }
+                ],
+                shapes: [{
+                    type: 'line',
+                    x0: -0.5,
+                    x1: 2.5,
+                    y0: 10,
+                    y1: 10,
+                    line: { color: '#64748b', width: 1.5, dash: 'dot' }
+                }]
+            };
+
+            Plotly.newPlot('chart-linemenRelative', [trace], layout, { responsive: true, displayModeBar: !mobile });
+        }
+
+        function renderLinemenOutageChart() {
+            const mobile = isMobile();
+            const days = ['Sunday', 'Monday AM', 'Monday PM', 'Tuesday', 'Wednesday'];
+            const nesRatio = [160/230, 300/170, 500/157, 700/130, 900/108];
+            const mteRatio = [200/23, 450/15, 550/8, 607/2.4, 600/0.79];
+
+            const traces = [
+                { name: 'NES', x: days, y: nesRatio, type: 'scatter', mode: 'lines+markers', line: { color: '#ef4444', width: 3 }, marker: { size: 10 } },
+                { name: 'MTE', x: days, y: mteRatio, type: 'scatter', mode: 'lines+markers', line: { color: '#22c55e', width: 3 }, marker: { size: 10 } }
+            ];
+
+            const layout = {
+                ...baseLayout,
+                title: {
+                    text: '<b>Linemen per 1,000 Outages</b><br><span style="font-size:12px;color:#94a3b8">Higher = More resources per problem</span>',
+                    font: { family: 'Inter, system-ui', size: mobile ? 15 : 18, color: '#f1f5f9' }
+                },
+                xaxis: { gridcolor: '#334155', tickfont: { size: mobile ? 9 : 11 } },
+                yaxis: { gridcolor: '#334155', tickfont: { size: mobile ? 9 : 11 }, type: 'log', title: { text: 'Linemen per 1K (log scale)', font: { size: 10, color: '#64748b' } } },
+                legend: { orientation: 'h', y: -0.15, x: 0.5, xanchor: 'center', font: { size: 11 } },
+                margin: mobile ? { t: 70, b: 70, l: 50, r: 20 } : { t: 80, b: 70, l: 60, r: 30 }
+            };
+
+            Plotly.newPlot('chart-linemenOutage', traces, layout, { responsive: true, displayModeBar: !mobile });
+        }
+
+        function renderLineMilesChart() {
+            const mobile = isMobile();
+            const utilities = ['NES', 'MTE', 'CEMC'];
+            const linemenPer100Miles = [(300/5900)*100, (450/12000)*100, (150/4500)*100];
+
+            const trace = {
+                x: utilities,
+                y: linemenPer100Miles,
+                type: 'bar',
+                marker: { color: ['#ef4444', '#22c55e', '#f59e0b'] }
+            };
+
+            const layout = {
+                ...baseLayout,
+                title: {
+                    text: '<b>Linemen per 100 Line Miles</b><br><span style="font-size:12px;color:#94a3b8">Infrastructure coverage (Monday)</span>',
+                    font: { family: 'Inter, system-ui', size: mobile ? 15 : 18, color: '#f1f5f9' }
+                },
+                xaxis: { gridcolor: '#334155', tickfont: { size: mobile ? 10 : 12 } },
+                yaxis: { gridcolor: '#334155', tickfont: { size: mobile ? 9 : 11 } },
+                margin: mobile ? { t: 70, b: 50, l: 50, r: 20 } : { t: 80, b: 60, l: 60, r: 30 },
+                annotations: [
+                    { x: 'NES', y: (300/5900)*100 + 0.8, text: '5,900 mi', showarrow: false, font: { size: 10, color: '#64748b' } },
+                    { x: 'MTE', y: (450/12000)*100 + 0.8, text: '12,000 mi', showarrow: false, font: { size: 10, color: '#64748b' } },
+                    { x: 'CEMC', y: (150/4500)*100 + 0.8, text: '4,500 mi', showarrow: false, font: { size: 10, color: '#64748b' } }
+                ]
+            };
+
+            Plotly.newPlot('chart-lineMiles', [trace], layout, { responsive: true, displayModeBar: !mobile });
+        }
+
+        function renderRestorationRateChart() {
+            const mobile = isMobile();
+            const labels = ['Peak', 'Sun Night', 'Mon AM', 'Mon Night', 'Tue AM', 'Tue Night', 'Wed AM', 'Wed PM'];
+            const nesRestored = [0, 20, 26, 32, 43, 48, 52, 53];
+            const mteRestored = [0, 35, 65, 78, 90, 94, 96, 97];
+
+            const traces = [
+                { name: 'NES', x: labels, y: nesRestored, type: 'scatter', mode: 'lines+markers', line: { color: '#ef4444', width: 3, shape: 'spline' }, marker: { size: 8 }, fill: 'tozeroy', fillcolor: 'rgba(239, 68, 68, 0.1)' },
+                { name: 'MTE', x: labels, y: mteRestored, type: 'scatter', mode: 'lines+markers', line: { color: '#22c55e', width: 3, shape: 'spline' }, marker: { size: 8 }, fill: 'tozeroy', fillcolor: 'rgba(34, 197, 94, 0.1)' }
+            ];
+
+            const layout = {
+                ...baseLayout,
+                title: {
+                    text: '<b>Restoration Progress (%)</b><br><span style="font-size:12px;color:#94a3b8">Cumulative % restored since peak</span>',
+                    font: { family: 'Inter, system-ui', size: mobile ? 15 : 18, color: '#f1f5f9' }
+                },
+                xaxis: { gridcolor: '#334155', tickfont: { size: mobile ? 8 : 10 }, tickangle: mobile ? -45 : 0 },
+                yaxis: { gridcolor: '#334155', tickfont: { size: mobile ? 9 : 11 }, range: [0, 100] },
+                legend: { orientation: 'h', y: -0.2, x: 0.5, xanchor: 'center', font: { size: 11 } },
+                margin: mobile ? { t: 70, b: 80, l: 45, r: 15 } : { t: 80, b: 70, l: 60, r: 30 },
+                shapes: [{ type: 'line', x0: labels[0], x1: labels[labels.length-1], y0: 50, y1: 50, line: { color: '#64748b', width: 1, dash: 'dot' } }]
+            };
+
+            Plotly.newPlot('chart-restorationRate', traces, layout, { responsive: true, displayModeBar: !mobile });
+        }
+
+        function renderTimelineChart() {
+            const mobile = isMobile();
+            const times = ['Sun 7am', 'Sun 7pm', 'Mon 7am', 'Mon 6pm', 'Tue 7am', 'Tue 2pm', 'Wed 6am'];
+            const nesLinemen = [160, 240, 300, 500, 700, 740, 900];
+            const mteLinemen = [200, 350, 450, 550, 607, 607, 600];
+            const nesOutages = [188, 210, 170, 157, 130, 120, 108];
+            const mteOutages = [15.5, 18, 8, 8.1, 2.4, 2.4, 0.79];
+
+            const traces = [
+                { name: 'NES Linemen', x: times, y: nesLinemen, type: 'scatter', mode: 'lines+markers', line: { color: '#ef4444', width: 3 }, marker: { size: 8 }, yaxis: 'y' },
+                { name: 'MTE Linemen', x: times, y: mteLinemen, type: 'scatter', mode: 'lines+markers', line: { color: '#22c55e', width: 3 }, marker: { size: 8 }, yaxis: 'y' },
+                { name: 'NES Outages (K)', x: times, y: nesOutages, type: 'scatter', mode: 'lines+markers', line: { color: '#ef4444', width: 2, dash: 'dot' }, marker: { size: 6, symbol: 'diamond' }, yaxis: 'y2' },
+                { name: 'MTE Outages (K)', x: times, y: mteOutages, type: 'scatter', mode: 'lines+markers', line: { color: '#22c55e', width: 2, dash: 'dot' }, marker: { size: 6, symbol: 'diamond' }, yaxis: 'y2' }
+            ];
+
+            const layout = {
+                ...baseLayout,
+                title: {
+                    text: '<b>Staffing vs Outages</b><br><span style="font-size:12px;color:#94a3b8">Solid = Linemen, Dashed = Outages (K)</span>',
+                    font: { family: 'Inter, system-ui', size: mobile ? 15 : 18, color: '#f1f5f9' }
+                },
+                xaxis: { gridcolor: '#334155', tickfont: { size: mobile ? 8 : 10 }, tickangle: -45 },
+                yaxis: { gridcolor: '#334155', tickfont: { size: mobile ? 9 : 11 }, title: { text: 'Linemen', font: { size: 10, color: '#64748b' } }, side: 'left' },
+                yaxis2: { gridcolor: '#334155', tickfont: { size: mobile ? 9 : 11 }, title: { text: 'Outages (K)', font: { size: 10, color: '#64748b' } }, overlaying: 'y', side: 'right' },
+                legend: { orientation: 'h', y: -0.25, x: 0.5, xanchor: 'center', font: { size: 9 } },
+                margin: mobile ? { t: 70, b: 100, l: 45, r: 45 } : { t: 80, b: 90, l: 60, r: 60 }
+            };
+
+            Plotly.newPlot('chart-timeline', traces, layout, { responsive: true, displayModeBar: !mobile });
+        }
+
+        // ============ RESIZE HANDLER ============
+        let resizeTimeout;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(function() {
+                if (currentSection === 'outages') {
+                    switchOutageChart(currentOutageChart);
+                } else {
+                    switchPerformanceChart(currentPerformanceChart);
+                }
+            }, 250);
+        });
+
+        // ============ INITIAL RENDER ============
+        document.addEventListener('DOMContentLoaded', function() {
+            renderMainChart();
+            updateStatCards('main');
+        });
+    </script>
+</body>
+</html>
