@@ -1302,6 +1302,16 @@
         document.addEventListener('DOMContentLoaded', function() {
             renderMainChart();
             updateStatCards('main');
+
+            // Check URL params or localStorage for section preference
+            const urlParams = new URLSearchParams(window.location.search);
+            const sectionParam = urlParams.get('section');
+            const storedSection = localStorage.getItem('nesDashboardSection');
+
+            if (sectionParam === 'performance' || storedSection === 'performance') {
+                switchSection('performance');
+                localStorage.removeItem('nesDashboardSection'); // Clear after use
+            }
         });
     </script>
 </body>
