@@ -293,6 +293,78 @@
             background: #334155;
         }
 
+        /* Calibration */
+        .calibrate-toggle {
+            margin-top: 8px;
+            padding: 6px 10px;
+            background: #334155;
+            border: none;
+            border-radius: 4px;
+            color: #94a3b8;
+            font-size: 10px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .calibrate-panel {
+            display: none;
+            position: absolute;
+            top: 80px;
+            right: 10px;
+            background: rgba(15, 23, 42, 0.95);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            z-index: 1000;
+            width: 160px;
+        }
+
+        .calibrate-panel.show {
+            display: block;
+        }
+
+        .calibrate-title {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #f1f5f9;
+        }
+
+        .calibrate-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .calibrate-row label {
+            font-size: 10px;
+            color: #94a3b8;
+            width: 40px;
+        }
+
+        .calibrate-row input {
+            flex: 1;
+            padding: 4px 6px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            color: #f1f5f9;
+            font-size: 11px;
+            width: 80px;
+        }
+
+        .calibrate-btn {
+            flex: 1;
+            padding: 6px;
+            background: #3b82f6;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
         /* Mobile adjustments */
         @media (max-width: 480px) {
             .controls {
@@ -309,6 +381,11 @@
                 bottom: 16px;
                 left: 10px;
                 right: auto;
+            }
+
+            .calibrate-panel {
+                top: auto;
+                bottom: 180px;
             }
         }
     </style>
@@ -343,6 +420,31 @@
         <div class="controls">
             <div class="control-label">Overlay Opacity</div>
             <input type="range" class="opacity-slider" id="opacity-slider" min="0" max="100" value="70" oninput="updateOpacity(this.value)">
+            <button class="calibrate-toggle" onclick="toggleCalibrate()">Calibrate</button>
+        </div>
+
+        <div class="calibrate-panel" id="calibrate-panel">
+            <div class="calibrate-title">Adjust Overlay Bounds</div>
+            <div class="calibrate-row">
+                <label>North:</label>
+                <input type="number" id="cal-north" step="0.01" onchange="updateBounds()">
+            </div>
+            <div class="calibrate-row">
+                <label>South:</label>
+                <input type="number" id="cal-south" step="0.01" onchange="updateBounds()">
+            </div>
+            <div class="calibrate-row">
+                <label>East:</label>
+                <input type="number" id="cal-east" step="0.01" onchange="updateBounds()">
+            </div>
+            <div class="calibrate-row">
+                <label>West:</label>
+                <input type="number" id="cal-west" step="0.01" onchange="updateBounds()">
+            </div>
+            <div class="calibrate-row">
+                <button class="calibrate-btn" onclick="copyBoundsUrl()">Copy URL</button>
+                <button class="calibrate-btn" onclick="resetBounds()">Reset</button>
+            </div>
         </div>
 
         <div class="locate-btn" onclick="locateMe()">
@@ -363,11 +465,19 @@
         // Nashville center
         const nashvilleCenter = [36.1627, -86.7816];
 
-        // Image bounds (approximate based on visible landmarks)
-        // The image shows: Greenbrier (north), Smyrna (south), Ashland City (west), Mt Juliet (east)
+        // Image bounds - calibrated using Briley Parkway (155) as reference
+        // Briley NW at I-24: ~36.23, -86.84 | Briley E at Opryland: ~36.21, -86.66
+        // Adjustable via URL params: ?swLat=X&swLng=X&neLat=X&neLng=X
+        const urlParams = new URLSearchParams(window.location.search);
         const imageBounds = [
-            [35.82, -87.12],  // Southwest corner
-            [36.44, -86.28]   // Northeast corner
+            [
+                parseFloat(urlParams.get('swLat')) || 35.90,   // Southwest lat
+                parseFloat(urlParams.get('swLng')) || -87.00   // Southwest lng
+            ],
+            [
+                parseFloat(urlParams.get('neLat')) || 36.42,   // Northeast lat
+                parseFloat(urlParams.get('neLng')) || -86.45   // Northeast lng
+            ]
         ];
 
         // Initialize map
@@ -530,6 +640,56 @@
 
         // Fit to overlay bounds on load
         map.fitBounds(imageBounds);
+
+        // ============ CALIBRATION ============
+        const defaultBounds = {
+            south: 35.90,
+            north: 36.42,
+            west: -87.00,
+            east: -86.45
+        };
+
+        // Initialize calibration inputs
+        document.getElementById('cal-north').value = imageBounds[1][0];
+        document.getElementById('cal-south').value = imageBounds[0][0];
+        document.getElementById('cal-east').value = imageBounds[1][1];
+        document.getElementById('cal-west').value = imageBounds[0][1];
+
+        function toggleCalibrate() {
+            document.getElementById('calibrate-panel').classList.toggle('show');
+        }
+
+        function updateBounds() {
+            const north = parseFloat(document.getElementById('cal-north').value);
+            const south = parseFloat(document.getElementById('cal-south').value);
+            const east = parseFloat(document.getElementById('cal-east').value);
+            const west = parseFloat(document.getElementById('cal-west').value);
+
+            if (north && south && east && west) {
+                const newBounds = [[south, west], [north, east]];
+                outageOverlay.setBounds(newBounds);
+            }
+        }
+
+        function copyBoundsUrl() {
+            const north = document.getElementById('cal-north').value;
+            const south = document.getElementById('cal-south').value;
+            const east = document.getElementById('cal-east').value;
+            const west = document.getElementById('cal-west').value;
+
+            const url = `${window.location.origin}/outage-map?swLat=${south}&swLng=${west}&neLat=${north}&neLng=${east}`;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('URL copied! Share this link or update the default bounds.');
+            });
+        }
+
+        function resetBounds() {
+            document.getElementById('cal-north').value = defaultBounds.north;
+            document.getElementById('cal-south').value = defaultBounds.south;
+            document.getElementById('cal-east').value = defaultBounds.east;
+            document.getElementById('cal-west').value = defaultBounds.west;
+            updateBounds();
+        }
     </script>
 </body>
 </html>
