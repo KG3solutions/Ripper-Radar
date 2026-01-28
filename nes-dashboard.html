@@ -789,8 +789,8 @@
             poles: '<strong style="color: #8b5cf6;">&#128268;</strong> 280+ broken poles reported. Ice accumulation caused trees to snap and bring down power lines.',
             linemen: '<strong style="color: #06b6d4;">&#128119;</strong> NES ramped from 160 to 900 workers. Faced criticism Monday for only having ~300 vs MTE\'s 450+.',
             overview: '<strong style="color: #60a5fa;">&#128202;</strong> NES had 10x the outages of MTE but started with fewer crews. 48.9% of NES customers lost power vs 6.4% of MTE.',
-            linemenRelative: '<strong style="color: #60a5fa;">&#127919; THE KEY METRIC:</strong> MTE had <strong>32x more linemen per 1,000 outages</strong> than NES on Monday. This shows actual staffing relative to the problem &mdash; not infrastructure size. NES was critically understaffed for their crisis.',
-            linemenOutage: '<strong style="color: #60a5fa;">&#128119;</strong> Same metric tracked over time. MTE consistently had 10-100x more linemen per thousand outages throughout the event.',
+            linemenRelative: '<strong style="color: #60a5fa;">&#127919; THE KEY METRIC:</strong> Track how many linemen each utility had <em>per 1,000 active outages</em>. Monday AM: MTE had 30 vs NES at just 1.8 &mdash; a <strong>16x difference</strong>. As outages dropped, ratios improved but NES stayed behind throughout.',
+            linemenOutage: '<strong style="color: #60a5fa;">&#128119;</strong> Alternative view of the same metric on log scale. MTE consistently had 10-100x more linemen per thousand outages throughout the event.',
             lineMiles: '<strong style="color: #60a5fa;">&#128268;</strong> MTE maintains 12,000 miles (2x NES) but deployed more linemen per 100 miles of infrastructure.',
             restorationRate: '<strong style="color: #60a5fa;">&#9889;</strong> MTE hit 50% restored in ~24 hours; NES took 72+. By Wednesday: MTE 97% vs NES 53%.',
             timeline: '<strong style="color: #60a5fa;">&#128200;</strong> MTE\'s outages dropped rapidly with steady crew. NES tripled crew but outages dropped slowly.'
@@ -1082,92 +1082,115 @@
 
         function renderLinemenRelativeChart() {
             const mobile = isMobile();
-            const utilities = ['NES', 'MTE', 'CEMC'];
-            const linemenPer1kOutages = [300 / 170, 450 / 8, 150 / 12];
+            const days = ['Sunday', 'Monday AM', 'Monday PM', 'Tuesday', 'Wednesday', 'Thursday'];
 
-            const trace = {
-                x: utilities,
-                y: linemenPer1kOutages,
-                type: 'bar',
-                marker: {
-                    color: ['#ef4444', '#22c55e', '#f59e0b'],
-                    line: { color: ['#dc2626', '#16a34a', '#d97706'], width: 2 }
+            // Linemen per 1,000 outages over time (linemen / outages_in_thousands)
+            // NES: Started understaffed, slowly ramped up crews
+            const nesRatio = [160/230, 300/170, 500/157, 700/130, 900/108, 900/85];
+            // MTE: Well-staffed from start, outages dropped fast
+            const mteRatio = [200/23, 450/15, 550/8, 607/2.4, 600/0.79, 600/0.3];
+            // CEMC: Moderate staffing, decent recovery
+            const cemcRatio = [100/17.5, 150/12, 180/9, 200/5, 210/2.5, 215/1.2];
+
+            const traces = [
+                {
+                    name: 'NES',
+                    x: days,
+                    y: nesRatio,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: '#ef4444', width: 3 },
+                    marker: { size: 10, symbol: 'circle' },
+                    hovertemplate: 'NES<br>%{x}<br>%{y:.1f} linemen/1K outages<extra></extra>'
                 },
-                text: linemenPer1kOutages.map(v => v.toFixed(1)),
-                textposition: 'outside',
-                textfont: { color: '#f1f5f9', size: mobile ? 12 : 14, family: 'Inter, system-ui' },
-                hovertemplate: '%{x}<br>%{y:.2f} linemen per 1K outages<extra></extra>'
-            };
+                {
+                    name: 'MTE',
+                    x: days,
+                    y: mteRatio,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: '#22c55e', width: 3 },
+                    marker: { size: 10, symbol: 'diamond' },
+                    hovertemplate: 'MTE<br>%{x}<br>%{y:.1f} linemen/1K outages<extra></extra>'
+                },
+                {
+                    name: 'CEMC',
+                    x: days,
+                    y: cemcRatio,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: '#f59e0b', width: 3 },
+                    marker: { size: 10, symbol: 'square' },
+                    hovertemplate: 'CEMC<br>%{x}<br>%{y:.1f} linemen/1K outages<extra></extra>'
+                }
+            ];
 
             const layout = {
                 ...baseLayout,
                 title: {
-                    text: '<b>Linemen per 1,000 Outages</b>',
-                    font: { family: 'Inter, system-ui', size: mobile ? 15 : 18, color: '#f1f5f9' },
+                    text: '<b>Linemen per 1,000 Outages Over Time</b><br><span style="font-size:12px;color:#94a3b8">Higher = More resources relative to problem size</span>',
+                    font: { family: 'Inter, system-ui', size: mobile ? 14 : 18, color: '#f1f5f9' },
                     y: 0.95
                 },
-                xaxis: { gridcolor: '#334155', tickfont: { size: mobile ? 11 : 14, color: '#f1f5f9' } },
+                xaxis: {
+                    gridcolor: '#334155',
+                    tickfont: { size: mobile ? 9 : 11, color: '#f1f5f9' },
+                    tickangle: mobile ? -45 : 0
+                },
                 yaxis: {
                     gridcolor: '#334155',
-                    tickfont: { size: mobile ? 9 : 11 },
-                    title: { text: 'Linemen per 1K Outages', font: { size: 10, color: '#64748b' } },
-                    range: [0, 75]
+                    tickfont: { size: mobile ? 9 : 11, color: '#94a3b8' },
+                    title: { text: 'Linemen per 1K Outages (log)', font: { size: 10, color: '#64748b' } },
+                    type: 'log'
                 },
-                margin: mobile ? { t: 50, b: 50, l: 55, r: 20 } : { t: 60, b: 60, l: 60, r: 30 },
+                legend: {
+                    orientation: 'h',
+                    y: -0.2,
+                    x: 0.5,
+                    xanchor: 'center',
+                    font: { size: 11, color: '#f1f5f9' },
+                    bgcolor: 'rgba(0,0,0,0.3)'
+                },
+                margin: mobile ? { t: 70, b: 80, l: 50, r: 20 } : { t: 80, b: 70, l: 60, r: 30 },
                 annotations: [
                     {
-                        x: 'MTE',
-                        y: 56.25,
-                        text: '<b>32x more than NES</b>',
-                        showarrow: false,
-                        font: { size: mobile ? 10 : 12, color: '#22c55e' },
-                        yshift: mobile ? 35 : 45,
+                        x: 'Monday AM',
+                        y: Math.log10(1.76),
+                        text: 'NES: 1.8',
+                        showarrow: true,
+                        arrowhead: 2,
+                        arrowcolor: '#ef4444',
+                        font: { size: 10, color: '#ef4444' },
+                        ax: -30,
+                        ay: 30,
                         bgcolor: '#1e293b',
-                        bordercolor: '#22c55e',
-                        borderwidth: 1,
-                        borderpad: 4
-                    },
-                    {
-                        x: 'NES',
-                        y: 1.76,
-                        text: '&#9888;&#65039; Understaffed',
-                        showarrow: false,
-                        font: { size: mobile ? 9 : 10, color: '#ef4444' },
-                        yshift: mobile ? 30 : 35,
-                        bgcolor: '#1e293b',
-                        bordercolor: '#ef4444',
-                        borderwidth: 1,
                         borderpad: 3
                     },
                     {
-                        x: 'CEMC',
-                        y: 12.5,
-                        text: 'Above baseline',
-                        showarrow: false,
-                        font: { size: mobile ? 8 : 9, color: '#64748b' },
-                        yshift: mobile ? 25 : 30
-                    },
-                    {
-                        x: -0.4,
-                        y: 10,
-                        text: '~10 baseline',
-                        showarrow: false,
-                        font: { size: 9, color: '#64748b' },
-                        xanchor: 'left',
-                        yshift: -12
+                        x: 'Monday AM',
+                        y: Math.log10(30),
+                        text: 'MTE: 30',
+                        showarrow: true,
+                        arrowhead: 2,
+                        arrowcolor: '#22c55e',
+                        font: { size: 10, color: '#22c55e' },
+                        ax: 30,
+                        ay: -25,
+                        bgcolor: '#1e293b',
+                        borderpad: 3
                     }
                 ],
                 shapes: [{
                     type: 'line',
                     x0: -0.5,
-                    x1: 2.5,
+                    x1: 5.5,
                     y0: 10,
                     y1: 10,
-                    line: { color: '#64748b', width: 1.5, dash: 'dot' }
+                    line: { color: '#64748b', width: 1, dash: 'dot' }
                 }]
             };
 
-            Plotly.newPlot('chart-linemenRelative', [trace], layout, { responsive: true, displayModeBar: !mobile });
+            Plotly.newPlot('chart-linemenRelative', traces, layout, { responsive: true, displayModeBar: !mobile });
         }
 
         function renderLinemenOutageChart() {
