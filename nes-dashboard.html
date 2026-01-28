@@ -677,16 +677,13 @@
                     <span>&#128202;</span><span>Overview</span>
                 </button>
                 <button class="chart-btn" id="perf-btn-linemenRelative" onclick="switchPerformanceChart('linemenRelative')">
-                    <span>&#127919;</span><span>Linemen/Outage</span>
+                    <span>&#127919;</span><span>Staffing Analysis</span>
                 </button>
                 <button class="chart-btn" id="perf-btn-linemenOutage" onclick="switchPerformanceChart('linemenOutage')">
                     <span>&#128119;</span><span>Over Time</span>
                 </button>
                 <button class="chart-btn" id="perf-btn-lineMiles" onclick="switchPerformanceChart('lineMiles')">
                     <span>&#128268;</span><span>Line Miles</span>
-                </button>
-                <button class="chart-btn" id="perf-btn-custPerLineman" onclick="switchPerformanceChart('custPerLineman')">
-                    <span>&#128101;</span><span>Cust/Lineman</span>
                 </button>
                 <button class="chart-btn" id="perf-btn-restorationRate" onclick="switchPerformanceChart('restorationRate')">
                     <span>&#9889;</span><span>Restoration</span>
@@ -801,7 +798,7 @@
             poles: '<strong style="color: #8b5cf6;">&#128268;</strong> 280+ broken poles reported. Ice accumulation caused trees to snap and bring down power lines.',
             linemen: '<strong style="color: #06b6d4;">&#128119;</strong> NES ramped from 160 to 900 workers. Faced criticism Monday for only having ~300 vs MTE\'s 450+.',
             overview: '<strong style="color: #60a5fa;">&#128202;</strong> NES had 10x the outages of MTE but started with fewer crews. 48.9% of NES customers lost power vs 6.4% of MTE.',
-            linemenRelative: '<strong style="color: #60a5fa;">&#127919; THE KEY METRIC:</strong> Track how many linemen each utility had <em>per 1,000 active outages</em>. Monday AM: MTE had 30 vs NES at just 1.8 &mdash; a <strong>16x difference</strong>. As outages dropped, ratios improved but NES stayed behind throughout.',
+            linemenRelative: '<strong style="color: #60a5fa;">&#127919; STAFFING ANALYSIS:</strong> Two key metrics: (1) Linemen per 1,000 outages - MTE had 30 vs NES at just 1.8 on Monday AM (16x difference). (2) Customers per lineman - NES started at 1,437 vs MTE\'s 115. Even by Thursday, NES was still at 256 vs MTE\'s 38.',
             linemenOutage: '<strong style="color: #60a5fa;">&#128119;</strong> Alternative view of the same metric on log scale. MTE consistently had 10-100x more linemen per thousand outages throughout the event.',
             lineMiles: '<strong style="color: #60a5fa;">&#128268;</strong> MTE maintains 12,000 miles (2x NES) but deployed more linemen per 100 miles of infrastructure.',
             custPerLineman: '<strong style="color: #60a5fa;">&#128101; STAFFING RATIO:</strong> NES has <strong>767 customers per lineman</strong> vs MTE with just 51. That\'s 15x more customers each NES lineman has to cover. CEMC falls in between at 117. This baseline staffing explains why NES struggles during emergencies.',
@@ -841,7 +838,10 @@
         function hideAllCharts() {
             const charts = ['main', 'restored', 'poles', 'linemen', 'overview', 'linemenRelative', 'linemenOutage', 'lineMiles', 'custPerLineman', 'restorationRate', 'timeline'];
             charts.forEach(id => {
-                document.getElementById('chart-' + id).className = document.getElementById('chart-' + id).className.includes('performance') ? 'chart performance hidden' : 'chart hidden';
+                const el = document.getElementById('chart-' + id);
+                if (el) {
+                    el.className = el.className.includes('performance') ? 'chart performance hidden' : 'chart hidden';
+                }
             });
         }
 
@@ -895,17 +895,21 @@
 
             switch(chart) {
                 case 'overview': renderOverviewChart(); break;
-                case 'linemenRelative': renderLinemenRelativeChart(); break;
+                case 'linemenRelative':
+                    renderLinemenRelativeChart();
+                    // Also show custPerLineman chart below
+                    showChart('custPerLineman');
+                    renderCustPerLinemanChart();
+                    break;
                 case 'linemenOutage': renderLinemenOutageChart(); break;
                 case 'lineMiles': renderLineMilesChart(); break;
-                case 'custPerLineman': renderCustPerLinemanChart(); break;
                 case 'restorationRate': renderRestorationRateChart(); break;
                 case 'timeline': renderTimelineChart(); break;
             }
         }
 
         function updatePerfButtons(activeChart) {
-            const buttons = ['overview', 'linemenRelative', 'linemenOutage', 'lineMiles', 'custPerLineman', 'restorationRate', 'timeline'];
+            const buttons = ['overview', 'linemenRelative', 'linemenOutage', 'lineMiles', 'restorationRate', 'timeline'];
             buttons.forEach(id => {
                 const el = document.getElementById('perf-btn-' + id);
                 if (el) {
@@ -1266,74 +1270,122 @@
 
         function renderCustPerLinemanChart() {
             const mobile = isMobile();
-            const utilities = ['NES', 'MTE', 'CEMC'];
-            // Customers per lineman (total customers / linemen on Monday)
-            const custPerLineman = [230000/300, 23000/450, 17500/150];
+            const days = ['Sunday', 'Monday AM', 'Monday PM', 'Tuesday', 'Wednesday', 'Thursday'];
 
-            const trace = {
-                x: utilities,
-                y: custPerLineman,
-                type: 'bar',
-                marker: {
-                    color: ['#ef4444', '#22c55e', '#f59e0b'],
-                    line: { color: ['#dc2626', '#16a34a', '#d97706'], width: 2 }
+            // Customers per lineman over time (total customers / linemen deployed)
+            // NES: 230K customers
+            const nesCustPerLineman = [230000/160, 230000/300, 230000/500, 230000/700, 230000/900, 230000/900];
+            // MTE: 23K customers
+            const mteCustPerLineman = [23000/200, 23000/450, 23000/550, 23000/607, 23000/600, 23000/600];
+            // CEMC: 17.5K customers
+            const cemcCustPerLineman = [17500/100, 17500/150, 17500/180, 17500/200, 17500/210, 17500/215];
+
+            const traces = [
+                {
+                    name: 'NES',
+                    x: days,
+                    y: nesCustPerLineman,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: '#ef4444', width: 3 },
+                    marker: { size: 10, symbol: 'circle' },
+                    hovertemplate: 'NES<br>%{x}<br>%{y:.0f} customers/lineman<extra></extra>'
                 },
-                text: custPerLineman.map(v => Math.round(v).toLocaleString()),
-                textposition: 'outside',
-                textfont: { color: '#f1f5f9', size: mobile ? 12 : 14, family: 'Inter, system-ui' },
-                hovertemplate: '%{x}<br>%{y:.0f} customers per lineman<extra></extra>'
-            };
+                {
+                    name: 'MTE',
+                    x: days,
+                    y: mteCustPerLineman,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: '#22c55e', width: 3 },
+                    marker: { size: 10, symbol: 'diamond' },
+                    hovertemplate: 'MTE<br>%{x}<br>%{y:.0f} customers/lineman<extra></extra>'
+                },
+                {
+                    name: 'CEMC',
+                    x: days,
+                    y: cemcCustPerLineman,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: '#f59e0b', width: 3 },
+                    marker: { size: 10, symbol: 'square' },
+                    hovertemplate: 'CEMC<br>%{x}<br>%{y:.0f} customers/lineman<extra></extra>'
+                }
+            ];
 
             const layout = {
                 ...baseLayout,
                 title: {
-                    text: '<b>Customers per Lineman</b><br><span style="font-size:12px;color:#94a3b8">Lower = Better staffing ratio (Monday)</span>',
-                    font: { family: 'Inter, system-ui', size: mobile ? 15 : 18, color: '#f1f5f9' },
+                    text: '<b>Customers per Lineman Over Time</b><br><span style="font-size:12px;color:#94a3b8">Lower = Better staffing ratio</span>',
+                    font: { family: 'Inter, system-ui', size: mobile ? 14 : 18, color: '#f1f5f9' },
                     y: 0.95
                 },
-                xaxis: { gridcolor: '#334155', tickfont: { size: mobile ? 11 : 14, color: '#f1f5f9' } },
+                xaxis: {
+                    gridcolor: '#334155',
+                    tickfont: { size: mobile ? 9 : 11, color: '#f1f5f9' },
+                    tickangle: mobile ? -45 : 0
+                },
                 yaxis: {
                     gridcolor: '#334155',
-                    tickfont: { size: mobile ? 9 : 11 },
+                    tickfont: { size: mobile ? 9 : 11, color: '#94a3b8' },
                     title: { text: 'Customers per Lineman', font: { size: 10, color: '#64748b' } }
                 },
-                margin: mobile ? { t: 70, b: 50, l: 55, r: 20 } : { t: 80, b: 60, l: 60, r: 30 },
+                legend: {
+                    orientation: 'h',
+                    y: -0.2,
+                    x: 0.5,
+                    xanchor: 'center',
+                    font: { size: 11, color: '#f1f5f9' },
+                    bgcolor: 'rgba(0,0,0,0.3)'
+                },
+                margin: mobile ? { t: 70, b: 80, l: 55, r: 20 } : { t: 80, b: 70, l: 65, r: 30 },
                 annotations: [
                     {
-                        x: 'NES',
-                        y: 767,
-                        text: '<b>15x more than MTE</b>',
+                        x: 'Sunday',
+                        y: 1437,
+                        text: '1,437',
                         showarrow: true,
                         arrowhead: 2,
                         arrowcolor: '#ef4444',
-                        font: { size: mobile ? 9 : 11, color: '#ef4444' },
-                        ax: 0,
-                        ay: -40,
+                        font: { size: mobile ? 9 : 10, color: '#ef4444' },
+                        ax: 25,
+                        ay: -20,
                         bgcolor: '#1e293b',
-                        bordercolor: '#ef4444',
-                        borderwidth: 1,
-                        borderpad: 4
+                        borderpad: 3
                     },
                     {
-                        x: 'MTE',
-                        y: 51,
-                        text: 'Industry standard',
+                        x: 'Thursday',
+                        y: 256,
+                        text: '256',
+                        showarrow: true,
+                        arrowhead: 2,
+                        arrowcolor: '#ef4444',
+                        font: { size: mobile ? 9 : 10, color: '#ef4444' },
+                        ax: -25,
+                        ay: -25,
+                        bgcolor: '#1e293b',
+                        borderpad: 3
+                    },
+                    {
+                        x: 'Thursday',
+                        y: 38,
+                        text: 'MTE: 38',
                         showarrow: false,
                         font: { size: mobile ? 8 : 9, color: '#22c55e' },
-                        yshift: 25
+                        yshift: 15
                     }
                 ],
                 shapes: [{
                     type: 'line',
                     x0: -0.5,
-                    x1: 2.5,
+                    x1: 5.5,
                     y0: 100,
                     y1: 100,
                     line: { color: '#64748b', width: 1.5, dash: 'dot' }
                 }]
             };
 
-            Plotly.newPlot('chart-custPerLineman', [trace], layout, { responsive: true, displayModeBar: !mobile });
+            Plotly.newPlot('chart-custPerLineman', traces, layout, { responsive: true, displayModeBar: !mobile });
         }
 
         function renderRestorationRateChart() {
