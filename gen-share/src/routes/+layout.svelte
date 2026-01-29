@@ -2,13 +2,23 @@
 	import '../app.css';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import { base } from '$app/paths';
 	import { initAuth, isAuthenticated, profile } from '$lib/stores/auth';
 	import { Menu, X, User } from 'lucide-svelte';
 
+	let { children } = $props();
 	let menuOpen = $state(false);
+	let mounted = $state(false);
+	let initError = $state<string | null>(null);
 
-	onMount(() => {
-		initAuth();
+	onMount(async () => {
+		try {
+			await initAuth();
+			mounted = true;
+		} catch (e) {
+			initError = e instanceof Error ? e.message : 'Unknown error';
+			mounted = true;
+		}
 	});
 
 	function toggleMenu() {
@@ -19,11 +29,13 @@
 		menuOpen = false;
 	}
 
-	// Check if current route should show header
-	let showHeader = $derived(
-		!$page.url.pathname.startsWith('/login') &&
-		$page.url.pathname !== '/'
-	);
+	// Check if current route should show header (accounting for base path)
+	let showHeader = $derived(() => {
+		const path = $page.url.pathname;
+		const isLogin = path === `${base}/login` || path === '/login';
+		const isHome = path === base || path === `${base}/` || path === '/';
+		return !isLogin && !isHome;
+	});
 </script>
 
 <svelte:head>
@@ -32,39 +44,46 @@
 
 <a href="#main-content" class="skip-link">Skip to main content</a>
 
-{#if showHeader}
+<!-- Debug info (remove in production) -->
+{#if initError}
+	<div class="bg-red-100 text-red-800 p-4 text-sm">
+		Auth Error: {initError}
+	</div>
+{/if}
+
+{#if showHeader()}
 	<header class="bg-white border-b border-gray-200 sticky top-0 z-20">
 		<div class="max-w-content mx-auto px-4">
 			<div class="flex items-center justify-between h-14">
-				<a href="/" class="text-lg font-semibold text-gray-800">
+				<a href="{base}/" class="text-lg font-semibold text-gray-800">
 					Generator Share
 				</a>
 
 				<!-- Desktop nav -->
 				<nav class="hidden sm:flex items-center gap-6">
 					<a
-						href="/browse/offers"
+						href="{base}/browse/offers"
 						class="text-base text-gray-600 hover:text-gray-800 {$page.url.pathname.includes('/browse') ? 'text-gray-800 font-medium' : ''}"
 					>
 						Browse
 					</a>
 					<a
-						href="/safety"
-						class="text-base text-gray-600 hover:text-gray-800 {$page.url.pathname === '/safety' ? 'text-gray-800 font-medium' : ''}"
+						href="{base}/safety"
+						class="text-base text-gray-600 hover:text-gray-800 {$page.url.pathname.includes('/safety') ? 'text-gray-800 font-medium' : ''}"
 					>
 						Safety
 					</a>
 					{#if $isAuthenticated}
 						<a
-							href="/profile"
-							class="flex items-center gap-2 text-base text-gray-600 hover:text-gray-800 {$page.url.pathname === '/profile' ? 'text-gray-800 font-medium' : ''}"
+							href="{base}/profile"
+							class="flex items-center gap-2 text-base text-gray-600 hover:text-gray-800 {$page.url.pathname.includes('/profile') ? 'text-gray-800 font-medium' : ''}"
 						>
 							<User class="w-5 h-5" />
 							<span>Profile</span>
 						</a>
 					{:else}
 						<a
-							href="/login"
+							href="{base}/login"
 							class="text-base text-blue-600 hover:text-blue-700 font-medium"
 						>
 							Sign in
@@ -93,14 +112,14 @@
 		{#if menuOpen}
 			<nav class="sm:hidden border-t border-gray-200 bg-white">
 				<a
-					href="/browse/offers"
+					href="{base}/browse/offers"
 					class="block px-4 py-3 text-base text-gray-700 hover:bg-gray-50 border-b border-gray-100"
 					onclick={closeMenu}
 				>
 					Browse
 				</a>
 				<a
-					href="/safety"
+					href="{base}/safety"
 					class="block px-4 py-3 text-base text-gray-700 hover:bg-gray-50 border-b border-gray-100"
 					onclick={closeMenu}
 				>
@@ -108,7 +127,7 @@
 				</a>
 				{#if $isAuthenticated}
 					<a
-						href="/profile"
+						href="{base}/profile"
 						class="block px-4 py-3 text-base text-gray-700 hover:bg-gray-50"
 						onclick={closeMenu}
 					>
@@ -116,7 +135,7 @@
 					</a>
 				{:else}
 					<a
-						href="/login"
+						href="{base}/login"
 						class="block px-4 py-3 text-base text-blue-600 font-medium hover:bg-gray-50"
 						onclick={closeMenu}
 					>
@@ -129,5 +148,5 @@
 {/if}
 
 <main id="main-content">
-	<slot />
+	{@render children()}
 </main>

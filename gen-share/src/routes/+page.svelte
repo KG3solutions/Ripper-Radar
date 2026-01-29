@@ -1,21 +1,22 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 	import { isAuthenticated } from '$lib/stores/auth';
 	import { Button, SafetyBanner } from '$lib/components';
 
 	function handleOffer() {
 		if ($isAuthenticated) {
-			goto('/create/offer');
+			goto(`${base}/create/offer`);
 		} else {
-			goto('/login?redirectTo=/create/offer');
+			goto(`${base}/login?redirectTo=${base}/create/offer`);
 		}
 	}
 
 	function handleRequest() {
 		if ($isAuthenticated) {
-			goto('/create/request');
+			goto(`${base}/create/request`);
 		} else {
-			goto('/login?redirectTo=/create/request');
+			goto(`${base}/login?redirectTo=${base}/create/request`);
 		}
 	}
 </script>
@@ -52,7 +53,7 @@
 				I need a generator
 			</Button>
 
-			<Button variant="secondary" href="/browse/offers">
+			<Button variant="secondary" href="{base}/browse/offers">
 				Browse all listings
 			</Button>
 		</div>
@@ -67,11 +68,11 @@
 			</p>
 
 			<div class="flex justify-center gap-4 text-sm">
-				<a href="/terms" class="text-blue-600 hover:underline">Terms of Use</a>
+				<a href="{base}/terms" class="text-blue-600 hover:underline">Terms of Use</a>
 				<span class="text-gray-300">&middot;</span>
-				<a href="/privacy" class="text-blue-600 hover:underline">Privacy Policy</a>
+				<a href="{base}/privacy" class="text-blue-600 hover:underline">Privacy Policy</a>
 				<span class="text-gray-300">&middot;</span>
-				<a href="/safety" class="text-blue-600 hover:underline">Safety Checklist</a>
+				<a href="{base}/safety" class="text-blue-600 hover:underline">Safety Checklist</a>
 			</div>
 		</div>
 	</footer>
