@@ -2052,6 +2052,130 @@
             border-radius: 0 0 6px 6px;
         }
 
+        /* NES Live Stats Grid */
+        .nes-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            padding: 12px;
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(238, 90, 36, 0.05) 100%);
+        }
+
+        .nes-stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-dim);
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .nes-stat-card.primary {
+            grid-column: span 2;
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(238, 90, 36, 0.1) 100%);
+            border-color: rgba(255, 107, 107, 0.3);
+        }
+
+        .nes-stat-card.primary .nes-stat-value {
+            font-size: 2rem;
+            color: #ff6b6b;
+        }
+
+        .nes-stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent-orange);
+        }
+
+        .nes-stat-label {
+            font-size: 0.5rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+        }
+
+        .nes-cause-breakdown {
+            padding: 8px 12px;
+            border-top: 1px solid var(--border-dim);
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .nes-cause-title {
+            font-size: 0.55rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .nes-cause-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .nes-cause-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 8px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            font-size: 0.55rem;
+        }
+
+        .nes-cause-name {
+            color: var(--text-secondary);
+        }
+
+        .nes-cause-count {
+            color: var(--accent-orange);
+            font-weight: 600;
+        }
+
+        .nes-map-link {
+            padding: 10px 12px;
+            border-top: 1px solid var(--border-dim);
+            display: flex;
+            gap: 8px;
+        }
+
+        .nes-map-btn, .nes-dashboard-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.6rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .nes-map-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: #fff;
+        }
+
+        .nes-map-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+        }
+
+        .nes-dashboard-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-dim);
+            color: var(--text-secondary);
+        }
+
+        .nes-dashboard-btn:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
         .outage-summary {
             padding: 12px;
             background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.05) 100%);
@@ -4657,16 +4781,55 @@
             </div>
         </section>
 
-        <!-- Power Outages - Embedded Map -->
+        <!-- Power Outages - Live NES Stats -->
         <section class="panel outage-panel" id="outage-panel">
             <div class="panel-header">
                 <div class="panel-title"><i class="fas fa-plug"></i> NES OUTAGES</div>
                 <div class="panel-meta">
-                    <a href="https://map.datacapable.com/i/nes/" target="_blank" style="color: #fff; text-decoration: none; font-size: 0.55rem;"><i class="fas fa-external-link-alt"></i> FULL MAP</a>
+                    <span class="live-indicator"></span>
+                    <span id="nes-update-time">--</span>
                 </div>
             </div>
-            <div class="panel-content" style="padding: 0; height: calc(100% - 44px);">
-                <iframe src="https://map.datacapable.com/i/nes/" style="width: 100%; height: 100%; min-height: 200px; border: none;" loading="lazy" title="NES Outage Map"></iframe>
+            <div class="panel-content" style="padding: 0; display: flex; flex-direction: column;">
+                <!-- Main Stats -->
+                <div class="nes-stats-grid" id="nes-stats-grid">
+                    <div class="nes-stat-card primary">
+                        <div class="nes-stat-value" id="nes-affected">--</div>
+                        <div class="nes-stat-label">Customers Without Power</div>
+                    </div>
+                    <div class="nes-stat-card">
+                        <div class="nes-stat-value" id="nes-outages">--</div>
+                        <div class="nes-stat-label">Active Outages</div>
+                    </div>
+                    <div class="nes-stat-card">
+                        <div class="nes-stat-value" id="nes-crew-coverage">--%</div>
+                        <div class="nes-stat-label">Crew Coverage</div>
+                    </div>
+                    <div class="nes-stat-card">
+                        <div class="nes-stat-value" id="nes-avg-duration">--</div>
+                        <div class="nes-stat-label">Avg Duration</div>
+                    </div>
+                </div>
+
+                <!-- Cause Breakdown -->
+                <div class="nes-cause-breakdown" id="nes-cause-breakdown">
+                    <div class="nes-cause-title"><i class="fas fa-list"></i> BY CAUSE</div>
+                    <div class="nes-cause-list" id="nes-cause-list">
+                        <div style="text-align: center; color: var(--text-muted); padding: 12px;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View Map Button -->
+                <div class="nes-map-link">
+                    <a href="outage-map.html" class="nes-map-btn">
+                        <i class="fas fa-map-marked-alt"></i> LIVE OUTAGE MAP
+                    </a>
+                    <a href="nes-dashboard.html" class="nes-dashboard-btn">
+                        <i class="fas fa-chart-line"></i> DASHBOARD
+                    </a>
+                </div>
             </div>
         </section>
 
@@ -6128,6 +6291,96 @@ STAY HOME. STAY WARM. STAY SAFE, BUTTS.
 
         const STATE_ORDER = ['LA', 'AR', 'MS', 'AL', 'NASH', 'TN', 'KY', 'GA'];  // Storm path order: west to east
 
+        // ============================================
+        // NES LIVE OUTAGE DATA
+        // ============================================
+        async function fetchNESOutages() {
+            const affectedEl = document.getElementById('nes-affected');
+            const outagesEl = document.getElementById('nes-outages');
+            const crewEl = document.getElementById('nes-crew-coverage');
+            const durationEl = document.getElementById('nes-avg-duration');
+            const causeListEl = document.getElementById('nes-cause-list');
+            const timeEl = document.getElementById('nes-update-time');
+
+            // Safety check for DOM elements
+            if (!affectedEl || !outagesEl) {
+                console.warn('NES outage DOM elements not found');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/nes-outages');
+                if (!res.ok) {
+                    throw new Error(`API error: ${res.status}`);
+                }
+                const data = await res.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                const summary = data.summary || {};
+
+                // Update main stats
+                affectedEl.textContent = (summary.totalAffected || 0).toLocaleString();
+                outagesEl.textContent = (summary.totalOutages || 0).toLocaleString();
+                crewEl.textContent = `${summary.crewCoveragePercent || 0}%`;
+
+                // Format duration
+                const avgMin = summary.avgDurationMinutes || 0;
+                if (avgMin >= 60) {
+                    const hours = Math.floor(avgMin / 60);
+                    const mins = avgMin % 60;
+                    durationEl.textContent = `${hours}h ${mins}m`;
+                } else {
+                    durationEl.textContent = `${avgMin}m`;
+                }
+
+                // Update cause breakdown
+                const causes = data.causeBreakdown || {};
+                const causeEntries = Object.entries(causes)
+                    .sort((a, b) => b[1].affected - a[1].affected)
+                    .slice(0, 6);
+
+                if (causeEntries.length > 0) {
+                    causeListEl.innerHTML = causeEntries.map(([cause, stats]) => `
+                        <div class="nes-cause-item">
+                            <span class="nes-cause-name">${cause}</span>
+                            <span class="nes-cause-count">${stats.count} outages • ${stats.affected.toLocaleString()} affected</span>
+                        </div>
+                    `).join('');
+                } else {
+                    causeListEl.innerHTML = `
+                        <div style="text-align: center; color: var(--text-muted); padding: 12px;">
+                            <i class="fas fa-check-circle" style="color: var(--accent-cyan);"></i> No active outages
+                        </div>
+                    `;
+                }
+
+                // Update time
+                timeEl.textContent = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+                // Store data for use by power outages function
+                window.nesLiveData = data;
+
+            } catch (error) {
+                console.error('NES outage fetch error:', error);
+                affectedEl.textContent = '--';
+                outagesEl.textContent = '--';
+                crewEl.textContent = '--%';
+                durationEl.textContent = '--';
+                causeListEl.innerHTML = `
+                    <div style="text-align: center; color: var(--text-muted); padding: 12px;">
+                        <i class="fas fa-exclamation-triangle" style="color: var(--accent-orange);"></i> Unable to load NES data
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize NES data and refresh every 2 minutes
+        fetchNESOutages();
+        setInterval(fetchNESOutages, 120000);
+
         async function fetchPowerOutages() {
             const summaryEl = document.getElementById('outage-summary');
             const statesEl = document.getElementById('outage-states');
@@ -6157,55 +6410,57 @@ STAY HOME. STAY WARM. STAY SAFE, BUTTS.
                     throw new Error('Invalid API response structure');
                 }
 
-                // Update summary
-                const totalFormatted = data.totalAffected.toLocaleString();
+                // Get NES data if available
+                const nesData = window.nesLiveData?.summary || {};
+                const nesAffected = nesData.totalAffected || 0;
+
+                // Update summary - include NES data
+                const totalWithNES = data.totalAffected + nesAffected;
+                const totalFormatted = totalWithNES.toLocaleString();
                 summaryEl.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <div class="outage-total"><i class="fas fa-bolt"></i> ${totalFormatted}</div>
-                            <div class="outage-total-label">Regional outages (excludes NES)</div>
+                            <div class="outage-total-label">Total Regional Outages</div>
                         </div>
                         <div style="text-align: right;">
-                            <a href="https://map.datacapable.com/i/nes/" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: #fff; padding: 6px 10px; border-radius: 4px; text-decoration: none; font-size: 0.55rem; font-weight: 600;">
-                                <i class="fas fa-bolt"></i> NES LIVE MAP
+                            <a href="outage-map.html" style="display: inline-block; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: #fff; padding: 6px 10px; border-radius: 4px; text-decoration: none; font-size: 0.55rem; font-weight: 600;">
+                                <i class="fas fa-map-marked-alt"></i> LIVE MAP
                             </a>
                         </div>
                     </div>
-                    <div style="margin-top: 6px; padding: 4px 8px; background: rgba(255,107,107,0.15); border-radius: 4px; font-size: 0.45rem; color: var(--accent-orange);">
-                        <i class="fas fa-exclamation-triangle"></i> NES (Nashville Electric) data not available via API - click button above for accurate Nashville numbers
+                    ${nesAffected > 0 ? `
+                    <div style="margin-top: 6px; padding: 4px 8px; background: rgba(255,107,107,0.15); border-radius: 4px; font-size: 0.45rem; color: #ff6b6b; display: flex; justify-content: space-between; align-items: center;">
+                        <span><i class="fas fa-plug"></i> NES Nashville: <strong>${nesAffected.toLocaleString()}</strong> affected</span>
+                        <span style="color: var(--accent-cyan);">${nesData.crewCoveragePercent || 0}% crew coverage</span>
                     </div>
+                    ` : ''}
                 `;
 
-                // Extract Nashville (Davidson County) data from TN
-                const tnCounties = data.byState['TN'] || [];
-                const nashvilleCounties = tnCounties.filter(c =>
-                    ['Davidson', 'Williamson', 'Rutherford', 'Wilson', 'Sumner'].includes(c.county)
-                );
-                const nashvilleTotal = nashvilleCounties.reduce((sum, c) => sum + c.metersAffected, 0);
-                const nashvilleMeters = nashvilleCounties.reduce((sum, c) => sum + c.totalMeters, 0);
-                const nashvillePercent = nashvilleMeters > 0 ? ((nashvilleTotal / nashvilleMeters) * 100).toFixed(1) : 0;
+                // Use live NES data for Nashville if available
+                const nesLive = window.nesLiveData?.summary || {};
+                const nesOutages = window.nesLiveData?.outages || [];
 
-                // Create Nashville stats object
+                // Create Nashville stats from live NES data
                 const nashStats = {
-                    totalAffected: nashvilleTotal,
-                    totalMeters: nashvilleMeters,
-                    percentOut: nashvillePercent,
-                    countyCount: nashvilleCounties.filter(c => c.metersAffected > 0).length
+                    totalAffected: nesLive.totalAffected || 0,
+                    totalOutages: nesLive.totalOutages || 0,
+                    crewCoverage: nesLive.crewCoveragePercent || 0,
+                    percentOut: nesLive.totalAffected > 0 ? ((nesLive.totalAffected / 400000) * 100).toFixed(1) : 0 // ~400k NES customers
                 };
 
                 // Render states in storm path order
                 statesEl.innerHTML = STATE_ORDER.map(state => {
-                    let stats, counties, topCounties;
+                    let stats, topCounties, renderNashDetails = false;
                     const isNash = state === 'NASH';
                     const isTN = state === 'TN';
 
                     if (isNash) {
                         stats = nashStats;
-                        counties = nashvilleCounties;
-                        topCounties = nashvilleCounties.filter(c => c.metersAffected > 0).slice(0, 5);
+                        renderNashDetails = true;
                     } else {
                         stats = data.stateTotals[state] || { totalAffected: 0, countyCount: 0, percentOut: 0 };
-                        counties = data.byState[state] || [];
+                        const counties = data.byState[state] || [];
                         topCounties = counties.filter(c => c.metersAffected > 0).slice(0, 5);
                     }
 
@@ -6213,12 +6468,12 @@ STAY HOME. STAY WARM. STAY SAFE, BUTTS.
                         <div class="outage-state ${isNash ? 'highlight-tn' : ''}" data-state="${state}">
                             <div class="outage-state-header" onclick="toggleStateDetails('${state}')">
                                 <div class="outage-state-name">
-                                    <i class="fas fa-${isNash ? 'home' : (isTN ? 'map' : 'arrow-right')}"></i>
+                                    <i class="fas fa-${isNash ? 'plug' : (isTN ? 'map' : 'arrow-right')}"></i>
                                     ${STATE_NAMES[state]}
-                                    ${isNash ? '<span style="font-size: 0.5rem; color: var(--accent-cyan); margin-left: 4px;">(NES AREA)</span>' : ''}
+                                    ${isNash ? '<span style="font-size: 0.5rem; color: #ff6b6b; margin-left: 4px;">LIVE</span>' : ''}
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 8px;">
-                                    ${isNash ? '<button class="nes-view-btn" onclick="event.stopPropagation(); showNESMap();" title="View NES Outage Map"><i class="fas fa-map"></i> NES</button>' : ''}
+                                    ${isNash ? '<a href="outage-map.html" class="nes-view-btn" onclick="event.stopPropagation();" title="View Live Outage Map"><i class="fas fa-map"></i> MAP</a>' : ''}
                                     <div class="outage-state-count">
                                         ${stats.totalAffected.toLocaleString()} out
                                         <span style="color: var(--text-muted); font-weight: normal;"> (${stats.percentOut}%)</span>
@@ -6229,22 +6484,28 @@ STAY HOME. STAY WARM. STAY SAFE, BUTTS.
                                 <div class="outage-state-bar-fill" style="width: ${Math.min(stats.percentOut, 100)}%;"></div>
                             </div>
                             <div class="outage-counties" id="counties-${state}">
-                                ${topCounties.length > 0 ? topCounties.map(c => `
+                                ${renderNashDetails ? `
+                                    <div style="padding: 8px;">
+                                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 8px;">
+                                            <div style="background: var(--bg-tertiary); padding: 8px; border-radius: 4px; text-align: center;">
+                                                <div style="font-size: 1rem; font-weight: 700; color: #ff6b6b;">${nashStats.totalOutages}</div>
+                                                <div style="font-size: 0.45rem; color: var(--text-muted);">OUTAGES</div>
+                                            </div>
+                                            <div style="background: var(--bg-tertiary); padding: 8px; border-radius: 4px; text-align: center;">
+                                                <div style="font-size: 1rem; font-weight: 700; color: var(--accent-cyan);">${nashStats.crewCoverage}%</div>
+                                                <div style="font-size: 0.45rem; color: var(--text-muted);">CREW COVERAGE</div>
+                                            </div>
+                                        </div>
+                                        <a href="outage-map.html" class="nes-view-btn" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); border: none;">
+                                            <i class="fas fa-map-marked-alt"></i> VIEW LIVE OUTAGE MAP
+                                        </a>
+                                    </div>
+                                ` : (topCounties && topCounties.length > 0 ? topCounties.map(c => `
                                     <div class="outage-county">
                                         <span class="outage-county-name">${c.county} County</span>
                                         <span class="outage-county-count">${c.metersAffected.toLocaleString()} (${c.percentOut}%)</span>
                                     </div>
-                                `).join('') : '<div style="padding: 8px; text-align: center; color: var(--text-muted); font-size: 0.5rem;">No significant outages</div>'}
-                                ${isNash ? `
-                                    <div style="padding: 8px; background: rgba(255,107,107,0.1); border-radius: 4px; margin-top: 6px; text-align: center;">
-                                        <div style="font-size: 0.45rem; color: var(--accent-orange); margin-bottom: 6px;">
-                                            <i class="fas fa-exclamation-triangle"></i> Numbers above exclude NES customers
-                                        </div>
-                                        <a href="https://map.datacapable.com/i/nes/" target="_blank" class="nes-view-btn" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); border: none;">
-                                            <i class="fas fa-external-link-alt"></i> VIEW REAL NES OUTAGES
-                                        </a>
-                                    </div>
-                                ` : ''}
+                                `).join('') : '<div style="padding: 8px; text-align: center; color: var(--text-muted); font-size: 0.5rem;">No significant outages</div>')}
                             </div>
                         </div>
                     `;
@@ -6622,8 +6883,8 @@ STAY HOME. STAY WARM. STAY SAFE, BUTTS.
 
         // NES Map Modal Functions
         function showNESMap() {
-            // DataCapable has better real-time NES data
-            window.open('https://map.datacapable.com/i/nes/', '_blank');
+            // Open our live outage map
+            window.location.href = 'outage-map.html';
         }
 
         function showNESMapFallback() {

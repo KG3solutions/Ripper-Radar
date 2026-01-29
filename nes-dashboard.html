@@ -115,6 +115,47 @@
             }
         }
 
+        /* Live Data Indicator */
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .live-text {
+            color: #22c55e;
+            font-weight: 600;
+        }
+
+        .live-time {
+            color: #64748b;
+        }
+
+        .live-indicator.error .live-dot {
+            background-color: #ef4444;
+            animation: none;
+        }
+
+        .live-indicator.error .live-text {
+            color: #ef4444;
+        }
+
         /* Section Toggle */
         .section-toggle {
             display: flex;
@@ -532,6 +573,11 @@
                 <a href="/" class="back-link">&larr; Back to Ripper Radar</a>
             </div>
             <h1>NES Storm Dashboard</h1>
+            <div id="live-indicator" class="live-indicator" style="display: none;">
+                <span class="live-dot"></span>
+                <span class="live-text">Live data</span>
+                <span class="live-time" id="last-updated"></span>
+            </div>
         </div>
 
         <!-- Section Toggle -->
@@ -741,6 +787,105 @@
         function getChartHeight(isPerformance = false) {
             if (isMobile()) return 300;
             return isPerformance ? 400 : 420;
+        }
+
+        // ============ LIVE DATA FUNCTIONS ============
+        let liveData = null;
+        let liveDataInterval = null;
+
+        async function fetchLiveData() {
+            try {
+                // Use live NES API for real-time data
+                const response = await fetch('/api/nes-outages');
+                if (!response.ok) throw new Error('API error');
+
+                liveData = await response.json();
+                updateLiveIndicator(liveData.timestamp);
+                updateStatCardsWithLiveData();
+                return liveData;
+            } catch (error) {
+                console.error('Failed to fetch live data:', error);
+                showLiveError();
+                return null;
+            }
+        }
+
+        function updateLiveIndicator(timestamp) {
+            const indicator = document.getElementById('live-indicator');
+            const timeEl = document.getElementById('last-updated');
+
+            if (!indicator) return;
+
+            indicator.style.display = 'flex';
+            indicator.classList.remove('error');
+
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMins = Math.round((now - date) / 60000);
+
+            if (diffMins < 1) {
+                timeEl.textContent = '• Just now';
+            } else if (diffMins < 60) {
+                timeEl.textContent = `• ${diffMins}m ago`;
+            } else {
+                timeEl.textContent = `• ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+            }
+        }
+
+        function showLiveError() {
+            const indicator = document.getElementById('live-indicator');
+            const timeEl = document.getElementById('last-updated');
+
+            if (!indicator) return;
+
+            indicator.style.display = 'flex';
+            indicator.classList.add('error');
+            timeEl.textContent = '• Connection error';
+        }
+
+        function updateStatCardsWithLiveData() {
+            if (!liveData || !liveData.summary) return;
+
+            const summary = liveData.summary;
+            const currentOutages = summary.totalAffected;
+
+            // Update current outages card
+            const currentCard = document.querySelector('#stat-current .stat-value');
+            if (currentCard) {
+                const formatted = currentOutages >= 1000
+                    ? Math.round(currentOutages / 1000) + 'K'
+                    : currentOutages.toLocaleString();
+                currentCard.textContent = formatted;
+            }
+
+            // Update restored card (calculate from peak - current)
+            const restoredCard = document.querySelector('#stat-restored .stat-value');
+            if (restoredCard) {
+                // Use peak of 230K - current outages for restored
+                const peak = 230000;
+                const restored = Math.max(0, peak - currentOutages);
+                const formatted = restored >= 1000
+                    ? Math.round(restored / 1000) + 'K'
+                    : restored.toLocaleString();
+                restoredCard.textContent = formatted;
+            }
+
+            // Update linemen card with crew coverage info
+            const linemenCard = document.querySelector('#stat-linemen .stat-value');
+            if (linemenCard && summary.crewCoveragePercent !== undefined) {
+                // Show how many outages have crews assigned
+                linemenCard.textContent = summary.crewCoveragePercent + '%';
+                const label = document.querySelector('#stat-linemen .stat-label');
+                if (label) label.textContent = 'Crew Coverage';
+            }
+        }
+
+        function startLiveDataPolling() {
+            // Initial fetch
+            fetchLiveData();
+
+            // Poll every 5 minutes
+            liveDataInterval = setInterval(fetchLiveData, 5 * 60 * 1000);
         }
 
         // ============ DATA ============
@@ -1487,6 +1632,9 @@
         document.addEventListener('DOMContentLoaded', function() {
             renderMainChart();
             updateStatCards('main');
+
+            // Start live data polling (updates every 5 minutes)
+            startLiveDataPolling();
 
             // Check URL params or localStorage for section preference
             const urlParams = new URLSearchParams(window.location.search);

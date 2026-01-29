@@ -11,29 +11,22 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>NES Outage Map | RIPPER RADAR</title>
+    <title>Live NES Outage Map | RIPPER RADAR</title>
 
     <!-- Open Graph -->
-    <meta property="og:title" content="NES Outage Map | RIPPER RADAR">
-    <meta property="og:description" content="Interactive map showing NES power outages vs restored areas. Search your address to see your status.">
+    <meta property="og:title" content="Live NES Outage Map | RIPPER RADAR">
+    <meta property="og:description" content="Real-time NES power outage map. See crew status, outage duration, and get alerts when your power is restored.">
 
     <!-- iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Outage Map">
-
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <meta name="apple-mobile-web-app-title" content="NES Outages">
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -48,7 +41,7 @@
 
         /* Header */
         .header {
-            padding: 10px 12px;
+            padding: 12px 16px;
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             border-bottom: 1px solid #334155;
             z-index: 1000;
@@ -58,68 +51,325 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
         .header h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #22c55e;
+            color: #0f172a;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .live-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: #0f172a;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 12px;
+            font-size: 12px;
+        }
+
+        .nav-links a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .stat-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #1e293b;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            white-space: nowrap;
+            border: 1px solid #334155;
+        }
+
+        .stat-chip .value {
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .stat-chip .label {
+            color: #94a3b8;
+        }
+
+        .stat-chip.danger { border-color: #ef4444; }
+        .stat-chip.danger .value { color: #ef4444; }
+        .stat-chip.warning { border-color: #f59e0b; }
+        .stat-chip.warning .value { color: #f59e0b; }
+        .stat-chip.success { border-color: #22c55e; }
+        .stat-chip.success .value { color: #22c55e; }
+
+        /* Main Layout */
+        .main-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 320px;
+            background: #1e293b;
+            border-right: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-section {
+            padding: 16px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .sidebar-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #f59e0b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        /* Address Search */
+        .address-input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .address-input {
+            flex: 1;
+            padding: 10px 12px;
+            background: #0f172a;
+            border: 2px solid #334155;
+            border-radius: 8px;
+            color: #f1f5f9;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .address-input:focus {
+            border-color: #3b82f6;
+        }
+
+        .address-input::placeholder {
+            color: #64748b;
+        }
+
+        .search-btn {
+            padding: 10px 14px;
+            background: #3b82f6;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .search-btn:hover {
+            background: #2563eb;
+        }
+
+        /* Alert Panel */
+        .alert-panel {
+            margin-top: 12px;
+            padding: 12px;
+            background: #0f172a;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            display: none;
+        }
+
+        .alert-panel.show {
+            display: block;
+        }
+
+        .alert-panel.has-power {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .alert-panel.no-power {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .alert-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .alert-status-icon {
+            font-size: 20px;
+        }
+
+        .alert-details {
+            font-size: 12px;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+
+        .alert-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .alert-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .alert-btn.primary {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .alert-btn.secondary {
+            background: #334155;
+            color: #f1f5f9;
+        }
+
+        /* Cause Breakdown */
+        .cause-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .cause-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            background: #0f172a;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .cause-name {
+            color: #f1f5f9;
+        }
+
+        .cause-stats {
+            display: flex;
+            gap: 12px;
+            color: #94a3b8;
+        }
+
+        .cause-stats span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Outage List */
+        .outage-list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .outage-item {
+            padding: 12px;
+            background: #0f172a;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 3px solid #ef4444;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .outage-item:hover {
+            transform: translateX(4px);
+        }
+
+        .outage-item.assigned {
+            border-left-color: #f59e0b;
+        }
+
+        .outage-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .outage-affected {
             font-size: 16px;
             font-weight: 700;
             color: #f1f5f9;
         }
 
-        .back-link {
-            font-size: 11px;
-            color: #60a5fa;
-            text-decoration: none;
-        }
-
-        /* Search */
-        .search-container {
-            display: flex;
-            gap: 8px;
-        }
-
-        .search-input {
-            flex: 1;
-            padding: 10px 12px;
-            background-color: #1e293b;
-            border: 2px solid #334155;
-            border-radius: 8px;
-            color: #f1f5f9;
-            font-size: 14px;
-            font-family: inherit;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .search-input:focus {
-            border-color: #60a5fa;
-        }
-
-        .search-input::placeholder {
-            color: #64748b;
-        }
-
-        .search-btn {
-            padding: 10px 16px;
-            background-color: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
+        .outage-status {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
             font-weight: 600;
-            cursor: pointer;
-            font-family: inherit;
-            white-space: nowrap;
         }
 
-        .search-btn:active {
-            background-color: #2563eb;
+        .outage-status.unassigned {
+            background: #ef4444;
+            color: white;
         }
 
-        .search-btn:disabled {
-            background-color: #475569;
-            cursor: not-allowed;
+        .outage-status.assigned {
+            background: #f59e0b;
+            color: #0f172a;
+        }
+
+        .outage-meta {
+            font-size: 11px;
+            color: #94a3b8;
+            display: flex;
+            gap: 12px;
         }
 
         /* Map Container */
@@ -133,22 +383,56 @@
             height: 100%;
         }
 
+        /* Map Controls */
+        .map-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        .map-btn {
+            width: 40px;
+            height: 40px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #f1f5f9;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .map-btn:hover {
+            background: #334155;
+        }
+
+        .map-btn.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+        }
+
         /* Legend */
-        .legend {
+        .map-legend {
             position: absolute;
             bottom: 20px;
             left: 10px;
             background: rgba(15, 23, 42, 0.95);
-            padding: 10px 12px;
+            padding: 12px;
             border-radius: 8px;
             border: 1px solid #334155;
             z-index: 1000;
-            font-size: 12px;
+            font-size: 11px;
         }
 
         .legend-title {
             font-weight: 600;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             color: #f1f5f9;
         }
 
@@ -159,106 +443,18 @@
             margin-bottom: 4px;
         }
 
-        .legend-color {
-            width: 16px;
-            height: 16px;
-            border-radius: 3px;
-        }
-
-        .legend-color.red { background-color: #ef4444; }
-        .legend-color.green { background-color: #22c55e; }
-
-        /* Controls */
-        .controls {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(15, 23, 42, 0.95);
-            padding: 10px 12px;
-            border-radius: 8px;
-            border: 1px solid #334155;
-            z-index: 1000;
-        }
-
-        .control-label {
-            font-size: 11px;
-            color: #94a3b8;
-            margin-bottom: 6px;
-        }
-
-        .opacity-slider {
-            width: 120px;
-            height: 6px;
-            -webkit-appearance: none;
-            background: #334155;
-            border-radius: 3px;
-            outline: none;
-        }
-
-        .opacity-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            background: #3b82f6;
+        .legend-dot {
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
-            cursor: pointer;
         }
 
-        .opacity-slider::-moz-range-thumb {
-            width: 18px;
-            height: 18px;
-            background: #3b82f6;
-            border-radius: 50%;
-            cursor: pointer;
-            border: none;
-        }
+        .legend-dot.unassigned { background: #ef4444; }
+        .legend-dot.assigned { background: #f59e0b; }
+        .legend-dot.long { background: #8b5cf6; }
 
-        /* Location marker popup */
-        .leaflet-popup-content-wrapper {
-            background: #1e293b;
-            color: #f1f5f9;
-            border-radius: 8px;
-        }
-
-        .leaflet-popup-tip {
-            background: #1e293b;
-        }
-
-        .popup-content {
-            font-family: 'Inter', sans-serif;
-            padding: 4px;
-        }
-
-        .popup-title {
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .popup-coords {
-            font-size: 11px;
-            color: #94a3b8;
-        }
-
-        /* Loading */
-        .loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(15, 23, 42, 0.95);
-            padding: 16px 24px;
-            border-radius: 8px;
-            border: 1px solid #334155;
-            z-index: 2000;
-            display: none;
-        }
-
-        .loading.show {
-            display: block;
-        }
-
-        /* Status indicator */
-        .status-badge {
+        /* Update time */
+        .update-time {
             position: absolute;
             bottom: 20px;
             right: 10px;
@@ -271,271 +467,514 @@
             color: #94a3b8;
         }
 
-        /* Locate button */
-        .locate-btn {
+        /* Loading */
+        .loading-overlay {
             position: absolute;
-            bottom: 80px;
-            right: 10px;
-            width: 40px;
-            height: 40px;
-            background: rgba(15, 23, 42, 0.95);
-            border: 1px solid #334155;
-            border-radius: 8px;
-            z-index: 1000;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.9);
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            font-size: 20px;
+            z-index: 2000;
         }
 
-        .locate-btn:active {
-            background: #334155;
-        }
-
-        /* Calibration */
-        .calibrate-toggle {
-            margin-top: 8px;
-            padding: 6px 10px;
-            background: #334155;
-            border: none;
-            border-radius: 4px;
-            color: #94a3b8;
-            font-size: 10px;
-            cursor: pointer;
-            width: 100%;
-        }
-
-        .calibrate-panel {
+        .loading-overlay.hidden {
             display: none;
-            position: absolute;
-            top: 80px;
-            right: 10px;
-            background: rgba(15, 23, 42, 0.95);
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #334155;
-            z-index: 1000;
-            width: 160px;
         }
 
-        .calibrate-panel.show {
-            display: block;
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #334155;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
 
-        .calibrate-title {
-            font-size: 11px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #f1f5f9;
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
-        .calibrate-row {
+        /* Mobile */
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                width: 100%;
+                z-index: 1500;
+            }
+
+            .sidebar.show {
+                display: flex;
+            }
+
+            .sidebar-close {
+                display: block;
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                width: 32px;
+                height: 32px;
+                background: #334155;
+                border: none;
+                border-radius: 6px;
+                color: #f1f5f9;
+                font-size: 18px;
+                cursor: pointer;
+            }
+
+            .mobile-toggle {
+                display: flex;
+            }
+
+            .stats-bar {
+                display: none;
+            }
+
+            .header h1 {
+                font-size: 16px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .sidebar-close {
+                display: none;
+            }
+
+            .mobile-toggle {
+                display: none;
+            }
+        }
+
+        /* Custom marker styles */
+        .outage-marker {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid white;
             display: flex;
             align-items: center;
-            gap: 6px;
-            margin-bottom: 6px;
-        }
-
-        .calibrate-row label {
+            justify-content: center;
             font-size: 10px;
-            color: #94a3b8;
-            width: 40px;
-        }
-
-        .calibrate-row input {
-            flex: 1;
-            padding: 4px 6px;
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 4px;
-            color: #f1f5f9;
-            font-size: 11px;
-            width: 80px;
-        }
-
-        .calibrate-btn {
-            flex: 1;
-            padding: 6px;
-            background: #3b82f6;
-            border: none;
-            border-radius: 4px;
+            font-weight: bold;
             color: white;
-            font-size: 10px;
-            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         }
 
-        /* Mobile adjustments */
-        @media (max-width: 480px) {
-            .controls {
-                top: auto;
-                bottom: 120px;
-                right: 10px;
-            }
-
-            .legend {
-                bottom: 60px;
-            }
-
-            .status-badge {
-                bottom: 16px;
-                left: 10px;
-                right: auto;
-            }
-
-            .calibrate-panel {
-                top: auto;
-                bottom: 180px;
-            }
-        }
+        .outage-marker.unassigned { background: #ef4444; }
+        .outage-marker.assigned { background: #f59e0b; color: #0f172a; }
+        .outage-marker.long { background: #8b5cf6; }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="header-top">
-            <h1>NES Outage Map</h1>
-            <a href="/nes-dashboard" class="back-link">Dashboard &rarr;</a>
+            <h1>
+                NES Outage Map
+                <span class="live-badge">Live</span>
+            </h1>
+            <div class="nav-links">
+                <a href="/nes-dashboard">Dashboard</a>
+                <a href="/">Ripper Radar</a>
+            </div>
         </div>
-        <div class="search-container">
-            <input type="text" class="search-input" id="address-input" placeholder="Enter your address..." autocomplete="off">
-            <button class="search-btn" id="search-btn" onclick="searchAddress()">Find</button>
+        <div class="stats-bar" id="stats-bar">
+            <div class="stat-chip danger">
+                <span class="value" id="stat-outages">--</span>
+                <span class="label">Outages</span>
+            </div>
+            <div class="stat-chip danger">
+                <span class="value" id="stat-affected">--</span>
+                <span class="label">Affected</span>
+            </div>
+            <div class="stat-chip warning">
+                <span class="value" id="stat-unassigned">--</span>
+                <span class="label">No Crew</span>
+            </div>
+            <div class="stat-chip success">
+                <span class="value" id="stat-assigned">--</span>
+                <span class="label">Crew Assigned</span>
+            </div>
+            <div class="stat-chip">
+                <span class="value" id="stat-avg-duration">--</span>
+                <span class="label">Avg Duration</span>
+            </div>
         </div>
     </div>
 
-    <div class="map-container">
-        <div id="map"></div>
+    <div class="main-container">
+        <div class="sidebar" id="sidebar">
+            <button class="sidebar-close" onclick="toggleSidebar()">×</button>
 
-        <div class="legend">
-            <div class="legend-title">Power Status</div>
-            <div class="legend-item">
-                <div class="legend-color red"></div>
-                <span>Out</span>
+            <!-- Address Search -->
+            <div class="sidebar-section">
+                <div class="sidebar-title">Check Your Address</div>
+                <div class="address-input-group">
+                    <input type="text" class="address-input" id="address-input" placeholder="Enter your address...">
+                    <button class="search-btn" onclick="searchAddress()">🔍</button>
+                </div>
+
+                <div class="alert-panel" id="alert-panel">
+                    <div class="alert-status">
+                        <span class="alert-status-icon" id="alert-icon">⚡</span>
+                        <span id="alert-text">Checking...</span>
+                    </div>
+                    <div class="alert-details" id="alert-details"></div>
+                    <div class="alert-actions">
+                        <button class="alert-btn primary" id="alert-notify-btn" onclick="enableNotifications()">
+                            🔔 Notify When Restored
+                        </button>
+                        <button class="alert-btn secondary" onclick="clearAddress()">Clear</button>
+                    </div>
+                </div>
             </div>
-            <div class="legend-item">
-                <div class="legend-color green"></div>
-                <span>Restored</span>
+
+            <!-- Cause Breakdown -->
+            <div class="sidebar-section">
+                <div class="sidebar-title">Outage Causes</div>
+                <div class="cause-list" id="cause-list">
+                    <div class="cause-item">
+                        <span class="cause-name">Loading...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Outage List -->
+            <div class="outage-list-container">
+                <div class="sidebar-title">Active Outages <span id="outage-count">(--)</span></div>
+                <div id="outage-list">
+                    <!-- Populated by JS -->
+                </div>
             </div>
         </div>
 
-        <div class="controls">
-            <div class="control-label">Overlay Opacity</div>
-            <input type="range" class="opacity-slider" id="opacity-slider" min="0" max="100" value="70" oninput="updateOpacity(this.value)">
-            <button class="calibrate-toggle" onclick="toggleCalibrate()">Calibrate</button>
-        </div>
+        <div class="map-container">
+            <div id="map"></div>
 
-        <div class="calibrate-panel" id="calibrate-panel">
-            <div class="calibrate-title">Adjust Overlay Bounds</div>
-            <div class="calibrate-row">
-                <label>North:</label>
-                <input type="number" id="cal-north" step="0.01" onchange="updateBounds()">
+            <div class="map-controls">
+                <button class="map-btn mobile-toggle" onclick="toggleSidebar()" title="Show List">☰</button>
+                <button class="map-btn" onclick="locateMe()" title="My Location">📍</button>
+                <button class="map-btn" id="heatmap-toggle" onclick="toggleHeatmap()" title="Toggle Heatmap">🔥</button>
+                <button class="map-btn" onclick="refreshData()" title="Refresh">🔄</button>
             </div>
-            <div class="calibrate-row">
-                <label>South:</label>
-                <input type="number" id="cal-south" step="0.01" onchange="updateBounds()">
+
+            <div class="map-legend">
+                <div class="legend-title">Outage Status</div>
+                <div class="legend-item">
+                    <div class="legend-dot unassigned"></div>
+                    <span>No Crew Assigned</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot assigned"></div>
+                    <span>Crew Dispatched</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot long"></div>
+                    <span>Long Outage (4h+)</span>
+                </div>
             </div>
-            <div class="calibrate-row">
-                <label>East:</label>
-                <input type="number" id="cal-east" step="0.01" onchange="updateBounds()">
+
+            <div class="update-time" id="update-time">
+                Loading...
             </div>
-            <div class="calibrate-row">
-                <label>West:</label>
-                <input type="number" id="cal-west" step="0.01" onchange="updateBounds()">
-            </div>
-            <div class="calibrate-row">
-                <button class="calibrate-btn" onclick="copyBoundsUrl()">Copy URL</button>
-                <button class="calibrate-btn" onclick="resetBounds()">Reset</button>
+
+            <div class="loading-overlay" id="loading">
+                <div class="loading-spinner"></div>
             </div>
         </div>
-
-        <div class="locate-btn" onclick="locateMe()">
-            📍
-        </div>
-
-        <div class="status-badge">
-            Jan 28, 2026 • Data from NES
-        </div>
-
-        <div class="loading" id="loading">Searching...</div>
     </div>
 
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet Heatmap Plugin -->
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+    <!-- Initialize map when DOM is ready -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initLeafletMap();
+        });
+    </script>
 
     <script>
+        // Global state
+        let map = null;
+        let markers = [];
+        let outageData = null;
+        let userMarker = null;
+        let savedAddress = null;
+        let notificationsEnabled = false;
+        let heatmapLayer = null;
+        let isLeaflet = true; // Using Leaflet (no API key required)
+        let refreshInterval = null;
+
         // Nashville center
-        const nashvilleCenter = [36.1627, -86.7816];
+        const NASHVILLE = { lat: 36.1627, lng: -86.7816 };
 
-        // Image bounds - calibrated using Briley Parkway (155) as reference
-        // Briley NW at I-24: ~36.23, -86.84 | Briley E at Opryland: ~36.21, -86.66
-        // Adjustable via URL params: ?swLat=X&swLng=X&neLat=X&neLng=X
-        const urlParams = new URLSearchParams(window.location.search);
-        const imageBounds = [
-            [
-                parseFloat(urlParams.get('swLat')) || 35.90,   // Southwest lat
-                parseFloat(urlParams.get('swLng')) || -87.00   // Southwest lng
-            ],
-            [
-                parseFloat(urlParams.get('neLat')) || 36.42,   // Northeast lat
-                parseFloat(urlParams.get('neLng')) || -86.45   // Northeast lng
-            ]
-        ];
+        // Initialize Leaflet Map
+        function initLeafletMap() {
+            map = L.map('map').setView([NASHVILLE.lat, NASHVILLE.lng], 11);
 
-        // Initialize map
-        const map = L.map('map', {
-            center: nashvilleCenter,
-            zoom: 11,
-            minZoom: 9,
-            maxZoom: 18,
-            zoomControl: true
-        });
+            // Dark theme tile layer
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '© OpenStreetMap, © CARTO',
+                maxZoom: 19
+            }).addTo(map);
 
-        // Add base tile layer (dark style)
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            subdomains: 'abcd',
-            maxZoom: 19
-        }).addTo(map);
+            // Load saved address
+            loadSavedAddress();
 
-        // Add outage overlay
-        const outageOverlay = L.imageOverlay('assets/nes-outage-map.jpeg', imageBounds, {
-            opacity: 0.7,
-            interactive: false
-        }).addTo(map);
+            // Fetch data
+            fetchOutageData();
 
-        // Current marker
-        let currentMarker = null;
+            // Auto-refresh every 2 minutes
+            refreshInterval = setInterval(fetchOutageData, 2 * 60 * 1000);
 
-        // Update opacity
-        function updateOpacity(value) {
-            outageOverlay.setOpacity(value / 100);
+            // Hide loading
+            document.getElementById('loading').classList.add('hidden');
         }
 
-        // Search address using Nominatim
+        // Fetch outage data from our API (with fallback to direct API)
+        async function fetchOutageData() {
+            try {
+                // Try our Netlify function first
+                let response = await fetch('/api/nes-outages');
+
+                // If that fails (local dev), try direct API
+                if (!response.ok) {
+                    console.log('Netlify API unavailable, trying direct NES API...');
+                    response = await fetch('https://utilisocial.io/datacapable/v2/p/NES/map/events');
+
+                    if (!response.ok) throw new Error('API error');
+
+                    // Process raw data into our format
+                    const rawData = await response.json();
+                    outageData = processRawNESData(rawData);
+                } else {
+                    outageData = await response.json();
+                }
+
+                updateUI();
+                updateMarkers();
+                checkUserAddress();
+
+            } catch (error) {
+                console.error('Failed to fetch outage data:', error);
+                document.getElementById('update-time').textContent = 'Error loading data';
+                document.getElementById('cause-list').innerHTML = '<div style="color: #ef4444; padding: 12px;">Failed to load data. Try refreshing.</div>';
+            }
+        }
+
+        // Process raw NES API data into our format (for local dev fallback)
+        function processRawNESData(rawData) {
+            const now = Date.now();
+            const outages = (rawData || []).map(outage => ({
+                id: outage.id,
+                title: outage.title || 'Outage',
+                status: outage.status || 'Unknown',
+                numPeople: outage.numPeople || 0,
+                cause: outage.cause || 'Unknown',
+                latitude: outage.latitude,
+                longitude: outage.longitude,
+                startTime: outage.startTime,
+                lastUpdatedTime: outage.lastUpdatedTime,
+                durationMinutes: outage.startTime ? Math.round((now - outage.startTime) / 60000) : null,
+                isAssigned: outage.status === 'Assigned',
+                isLongOutage: outage.startTime ? (now - outage.startTime) > 4 * 3600000 : false
+            }));
+
+            // Calculate summary stats
+            const totalOutages = outages.length;
+            const totalAffected = outages.reduce((sum, o) => sum + o.numPeople, 0);
+            const assignedOutages = outages.filter(o => o.isAssigned).length;
+
+            // Group by cause
+            const causeBreakdown = {};
+            outages.forEach(o => {
+                const cause = o.cause || 'Unknown';
+                if (!causeBreakdown[cause]) {
+                    causeBreakdown[cause] = { count: 0, affected: 0 };
+                }
+                causeBreakdown[cause].count++;
+                causeBreakdown[cause].affected += o.numPeople;
+            });
+
+            return {
+                timestamp: new Date().toISOString(),
+                summary: {
+                    totalOutages,
+                    totalAffected,
+                    assignedOutages,
+                    crewCoveragePercent: totalOutages > 0 ? Math.round((assignedOutages / totalOutages) * 100) : 100
+                },
+                causeBreakdown,
+                outages
+            };
+        }
+
+        // Update UI with stats
+        function updateUI() {
+            if (!outageData) return;
+
+            const s = outageData.summary;
+
+            document.getElementById('stat-outages').textContent = s.totalOutages.toLocaleString();
+            document.getElementById('stat-affected').textContent = formatNumber(s.totalAffected);
+            document.getElementById('stat-unassigned').textContent = s.unassignedOutages.toLocaleString();
+            document.getElementById('stat-assigned').textContent = s.assignedOutages.toLocaleString();
+            document.getElementById('stat-avg-duration').textContent = formatDuration(s.avgDurationMinutes);
+            document.getElementById('outage-count').textContent = `(${s.totalOutages})`;
+
+            // Update time
+            const time = new Date(outageData.timestamp);
+            document.getElementById('update-time').textContent = `Updated ${time.toLocaleTimeString()}`;
+
+            // Update cause breakdown
+            updateCauseList();
+
+            // Update outage list
+            updateOutageList();
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000) return Math.round(num / 1000) + 'K';
+            return num.toLocaleString();
+        }
+
+        function formatDuration(minutes) {
+            if (minutes < 60) return minutes + 'm';
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return hours + 'h ' + mins + 'm';
+        }
+
+        // Update cause breakdown
+        function updateCauseList() {
+            const container = document.getElementById('cause-list');
+            const causes = Object.entries(outageData.causeBreakdown)
+                .sort((a, b) => b[1].affected - a[1].affected)
+                .slice(0, 5);
+
+            container.innerHTML = causes.map(([cause, data]) => `
+                <div class="cause-item">
+                    <span class="cause-name">${cause}</span>
+                    <span class="cause-stats">
+                        <span>⚡ ${data.count}</span>
+                        <span>👥 ${formatNumber(data.affected)}</span>
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        // Update outage list in sidebar
+        function updateOutageList() {
+            const container = document.getElementById('outage-list');
+            const outages = outageData.outages
+                .sort((a, b) => b.numPeople - a.numPeople)
+                .slice(0, 50);
+
+            container.innerHTML = outages.map(o => `
+                <div class="outage-item ${o.isAssigned ? 'assigned' : ''}" onclick="zoomToOutage(${o.latitude}, ${o.longitude})">
+                    <div class="outage-item-header">
+                        <span class="outage-affected">${o.numPeople.toLocaleString()} affected</span>
+                        <span class="outage-status ${o.isAssigned ? 'assigned' : 'unassigned'}">
+                            ${o.isAssigned ? '🛠 Crew Assigned' : '⏳ Waiting'}
+                        </span>
+                    </div>
+                    <div class="outage-meta">
+                        <span>⏱ ${formatDuration(o.durationMinutes || 0)}</span>
+                        <span>📍 ${o.cause || 'Unknown cause'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update map markers
+        function updateMarkers() {
+            // Clear existing markers
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+
+            if (!outageData || !outageData.outages) return;
+
+            outageData.outages.forEach(outage => {
+                const marker = createMarker(outage);
+                markers.push(marker);
+            });
+        }
+
+        // Create a marker for an outage
+        function createMarker(outage) {
+            // Determine color
+            let color = '#ef4444'; // Red - unassigned
+            if (outage.isAssigned) color = '#f59e0b'; // Yellow - assigned
+            if (outage.isLongOutage) color = '#8b5cf6'; // Purple - long
+
+            const marker = L.circleMarker([outage.latitude, outage.longitude], {
+                radius: Math.min(8 + Math.sqrt(outage.numPeople) / 10, 20),
+                fillColor: color,
+                color: 'white',
+                weight: 2,
+                fillOpacity: 0.8
+            }).addTo(map);
+
+            marker.bindPopup(createPopupContent(outage));
+            return marker;
+        }
+
+        // Create popup content for marker
+        function createPopupContent(outage) {
+            return `
+                <div style="font-family: Inter, sans-serif; padding: 8px; min-width: 200px;">
+                    <div style="font-size: 18px; font-weight: bold; margin-bottom: 8px;">
+                        ${outage.numPeople.toLocaleString()} affected
+                    </div>
+                    <div style="margin-bottom: 4px;">
+                        <strong>Status:</strong> ${outage.isAssigned ? '🛠 Crew Assigned' : '⏳ Waiting for Crew'}
+                    </div>
+                    <div style="margin-bottom: 4px;">
+                        <strong>Cause:</strong> ${outage.cause || 'Unknown'}
+                    </div>
+                    <div style="margin-bottom: 4px;">
+                        <strong>Duration:</strong> ${formatDuration(outage.durationMinutes || 0)}
+                    </div>
+                    <div style="font-size: 11px; color: #666; margin-top: 8px;">
+                        Started: ${outage.startTime ? new Date(outage.startTime).toLocaleString() : 'Unknown'}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Zoom to specific outage
+        function zoomToOutage(lat, lng) {
+            map.setView([lat, lng], 15);
+        }
+
+        // Search address
         async function searchAddress() {
             const input = document.getElementById('address-input');
-            const btn = document.getElementById('search-btn');
-            const loading = document.getElementById('loading');
             const address = input.value.trim();
 
-            if (!address) {
-                input.focus();
-                return;
-            }
+            if (!address) return;
 
-            // Add Nashville context if not present
+            // Add Nashville context
             let searchQuery = address;
-            if (!address.toLowerCase().includes('nashville') &&
-                !address.toLowerCase().includes('tennessee') &&
-                !address.toLowerCase().includes('tn')) {
+            if (!address.toLowerCase().includes('nashville') && !address.toLowerCase().includes('tn')) {
                 searchQuery = address + ', Nashville, TN';
             }
 
-            btn.disabled = true;
-            loading.classList.add('show');
-
             try {
                 const response = await fetch(
-                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&countrycodes=us`,
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`,
                     { headers: { 'User-Agent': 'RipperRadar/1.0' } }
                 );
                 const results = await response.json();
@@ -543,153 +982,228 @@
                 if (results.length > 0) {
                     const result = results[0];
                     const lat = parseFloat(result.lat);
-                    const lon = parseFloat(result.lon);
+                    const lng = parseFloat(result.lon);
 
-                    // Remove existing marker
-                    if (currentMarker) {
-                        map.removeLayer(currentMarker);
-                    }
+                    savedAddress = { lat, lng, address: result.display_name };
+                    localStorage.setItem('nesAlertAddress', JSON.stringify(savedAddress));
 
-                    // Add new marker
-                    currentMarker = L.marker([lat, lon]).addTo(map);
-                    currentMarker.bindPopup(`
-                        <div class="popup-content">
-                            <div class="popup-title">📍 Your Location</div>
-                            <div class="popup-coords">${result.display_name.split(',').slice(0, 3).join(',')}</div>
-                        </div>
-                    `).openPopup();
+                    addUserMarker(lat, lng);
+                    checkUserAddress();
 
                     // Zoom to location
-                    map.setView([lat, lon], 15);
+                    zoomToOutage(lat, lng);
                 } else {
-                    alert('Address not found. Try adding more details or zip code.');
+                    alert('Address not found. Try adding more details.');
                 }
             } catch (error) {
-                console.error('Search error:', error);
+                console.error('Geocoding error:', error);
                 alert('Search failed. Please try again.');
-            } finally {
-                btn.disabled = false;
-                loading.classList.remove('show');
             }
         }
 
-        // Enter key to search
-        document.getElementById('address-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                searchAddress();
+        // Add user marker
+        function addUserMarker(lat, lng) {
+            if (userMarker) {
+                map.removeLayer(userMarker);
             }
-        });
 
-        // Locate me using GPS
+            userMarker = L.marker([lat, lng], {
+                icon: L.divIcon({
+                    className: 'user-marker',
+                    html: '<div style="font-size: 24px;">📍</div>',
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 24]
+                })
+            }).addTo(map);
+        }
+
+        // Check if user address is in outage zone
+        function checkUserAddress() {
+            if (!savedAddress || !outageData) return;
+
+            const panel = document.getElementById('alert-panel');
+            panel.classList.add('show');
+
+            // Find nearest outage
+            let nearestOutage = null;
+            let nearestDistance = Infinity;
+
+            outageData.outages.forEach(outage => {
+                const dist = getDistance(savedAddress.lat, savedAddress.lng, outage.latitude, outage.longitude);
+                if (dist < nearestDistance) {
+                    nearestDistance = dist;
+                    nearestOutage = outage;
+                }
+            });
+
+            // If within 0.5 miles of an outage, assume affected
+            const isAffected = nearestDistance < 0.5;
+
+            const icon = document.getElementById('alert-icon');
+            const text = document.getElementById('alert-text');
+            const details = document.getElementById('alert-details');
+            const notifyBtn = document.getElementById('alert-notify-btn');
+
+            if (isAffected) {
+                panel.classList.remove('has-power');
+                panel.classList.add('no-power');
+                icon.textContent = '⚠️';
+                text.textContent = 'Likely Affected by Outage';
+                details.innerHTML = `
+                    <strong>Nearest outage:</strong> ${nearestOutage.numPeople.toLocaleString()} customers<br>
+                    <strong>Status:</strong> ${nearestOutage.isAssigned ? '🛠 Crew Assigned' : '⏳ Waiting for Crew'}<br>
+                    <strong>Duration:</strong> ${formatDuration(nearestOutage.durationMinutes || 0)}<br>
+                    <strong>Cause:</strong> ${nearestOutage.cause || 'Unknown'}
+                `;
+                notifyBtn.style.display = 'block';
+            } else {
+                panel.classList.remove('no-power');
+                panel.classList.add('has-power');
+                icon.textContent = '✅';
+                text.textContent = 'No Outage Detected';
+                details.innerHTML = `Your area appears to have power.<br>Nearest outage: ${(nearestDistance).toFixed(1)} miles away`;
+                notifyBtn.style.display = 'none';
+            }
+
+            // Check for power restoration notification
+            if (notificationsEnabled && !isAffected) {
+                showNotification('Power Restored!', 'Your area appears to have power restored.');
+            }
+        }
+
+        // Calculate distance between two points (in miles)
+        function getDistance(lat1, lng1, lat2, lng2) {
+            const R = 3959; // Earth's radius in miles
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        // Load saved address from localStorage
+        function loadSavedAddress() {
+            const saved = localStorage.getItem('nesAlertAddress');
+            if (saved) {
+                savedAddress = JSON.parse(saved);
+                document.getElementById('address-input').value = savedAddress.address.split(',')[0];
+                addUserMarker(savedAddress.lat, savedAddress.lng);
+            }
+        }
+
+        // Clear saved address
+        function clearAddress() {
+            savedAddress = null;
+            localStorage.removeItem('nesAlertAddress');
+            document.getElementById('address-input').value = '';
+            document.getElementById('alert-panel').classList.remove('show');
+            if (userMarker) {
+                map.removeLayer(userMarker);
+                userMarker = null;
+            }
+        }
+
+        // Enable browser notifications
+        function enableNotifications() {
+            if ('Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        notificationsEnabled = true;
+                        document.getElementById('alert-notify-btn').textContent = '🔔 Notifications Enabled';
+                        document.getElementById('alert-notify-btn').disabled = true;
+                        showNotification('Notifications Enabled', 'You will be notified when power is restored.');
+                    }
+                });
+            }
+        }
+
+        // Show browser notification
+        function showNotification(title, body) {
+            if (Notification.permission === 'granted') {
+                new Notification(title, {
+                    body,
+                    icon: '/assets/icon-192.png'
+                });
+            }
+        }
+
+        // Locate user
         function locateMe() {
-            const loading = document.getElementById('loading');
-            loading.classList.add('show');
-
             if (!navigator.geolocation) {
-                alert('Geolocation not supported by your browser');
-                loading.classList.remove('show');
+                alert('Geolocation not supported');
                 return;
             }
 
             navigator.geolocation.getCurrentPosition(
-                function(position) {
+                position => {
                     const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
+                    const lng = position.coords.longitude;
 
-                    // Remove existing marker
-                    if (currentMarker) {
-                        map.removeLayer(currentMarker);
-                    }
-
-                    // Add new marker
-                    currentMarker = L.marker([lat, lon]).addTo(map);
-                    currentMarker.bindPopup(`
-                        <div class="popup-content">
-                            <div class="popup-title">📍 Your Location</div>
-                            <div class="popup-coords">${lat.toFixed(5)}, ${lon.toFixed(5)}</div>
-                        </div>
-                    `).openPopup();
-
-                    // Zoom to location
-                    map.setView([lat, lon], 15);
-                    loading.classList.remove('show');
+                    savedAddress = { lat, lng, address: 'Your Location' };
+                    addUserMarker(lat, lng);
+                    zoomToOutage(lat, lng);
+                    checkUserAddress();
                 },
-                function(error) {
-                    loading.classList.remove('show');
-                    switch(error.code) {
-                        case error.PERMISSION_DENIED:
-                            alert('Location permission denied. Please enable location access.');
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            alert('Location unavailable. Try searching your address instead.');
-                            break;
-                        case error.TIMEOUT:
-                            alert('Location request timed out. Please try again.');
-                            break;
-                        default:
-                            alert('Unable to get location. Try searching your address instead.');
-                    }
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
+                error => {
+                    alert('Unable to get location. Please enter your address manually.');
                 }
             );
         }
 
-        // Fit to overlay bounds on load
-        map.fitBounds(imageBounds);
-
-        // ============ CALIBRATION ============
-        const defaultBounds = {
-            south: 35.90,
-            north: 36.42,
-            west: -87.00,
-            east: -86.45
-        };
-
-        // Initialize calibration inputs
-        document.getElementById('cal-north').value = imageBounds[1][0];
-        document.getElementById('cal-south').value = imageBounds[0][0];
-        document.getElementById('cal-east').value = imageBounds[1][1];
-        document.getElementById('cal-west').value = imageBounds[0][1];
-
-        function toggleCalibrate() {
-            document.getElementById('calibrate-panel').classList.toggle('show');
+        // Toggle sidebar on mobile
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
         }
 
-        function updateBounds() {
-            const north = parseFloat(document.getElementById('cal-north').value);
-            const south = parseFloat(document.getElementById('cal-south').value);
-            const east = parseFloat(document.getElementById('cal-east').value);
-            const west = parseFloat(document.getElementById('cal-west').value);
+        // Toggle heatmap
+        function toggleHeatmap() {
+            const btn = document.getElementById('heatmap-toggle');
 
-            if (north && south && east && west) {
-                const newBounds = [[south, west], [north, east]];
-                outageOverlay.setBounds(newBounds);
+            if (!outageData || !outageData.outages) return;
+
+            if (heatmapLayer) {
+                // Remove heatmap
+                map.removeLayer(heatmapLayer);
+                heatmapLayer = null;
+                btn.classList.remove('active');
+            } else {
+                // Create heatmap data: [lat, lng, intensity]
+                const heatData = outageData.outages.map(o => [
+                    o.latitude,
+                    o.longitude,
+                    Math.min(o.numPeople / 100, 10) // Scale intensity
+                ]);
+
+                heatmapLayer = L.heatLayer(heatData, {
+                    radius: 25,
+                    blur: 15,
+                    maxZoom: 14,
+                    gradient: {
+                        0.2: '#22c55e',
+                        0.4: '#f59e0b',
+                        0.6: '#ef4444',
+                        1.0: '#7c3aed'
+                    }
+                }).addTo(map);
+
+                btn.classList.add('active');
             }
         }
 
-        function copyBoundsUrl() {
-            const north = document.getElementById('cal-north').value;
-            const south = document.getElementById('cal-south').value;
-            const east = document.getElementById('cal-east').value;
-            const west = document.getElementById('cal-west').value;
-
-            const url = `${window.location.origin}/outage-map?swLat=${south}&swLng=${west}&neLat=${north}&neLng=${east}`;
-            navigator.clipboard.writeText(url).then(() => {
-                alert('URL copied! Share this link or update the default bounds.');
+        // Refresh data
+        function refreshData() {
+            document.getElementById('loading').classList.remove('hidden');
+            fetchOutageData().then(() => {
+                document.getElementById('loading').classList.add('hidden');
             });
         }
 
-        function resetBounds() {
-            document.getElementById('cal-north').value = defaultBounds.north;
-            document.getElementById('cal-south').value = defaultBounds.south;
-            document.getElementById('cal-east').value = defaultBounds.east;
-            document.getElementById('cal-west').value = defaultBounds.west;
-            updateBounds();
-        }
+        // Enter key to search
+        document.getElementById('address-input').addEventListener('keypress', e => {
+            if (e.key === 'Enter') searchAddress();
+        });
     </script>
 </body>
 </html>

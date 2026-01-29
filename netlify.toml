@@ -5,6 +5,11 @@
 [functions]
   node_bundler = "esbuild"
 
+# Scheduled function for outage data (runs hourly - Netlify free tier minimum)
+# For 30-min updates, can trigger via external cron service hitting /api/outage-data
+[functions."outage-data-agent"]
+  schedule = "@hourly"
+
 [[headers]]
   for = "/netlify/functions/*"
   [headers.values]
