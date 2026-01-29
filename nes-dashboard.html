@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XW7PRQVCJB"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-XW7PRQVCJB');
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NES Storm Dashboard | RIPPER RADAR</title>
@@ -159,7 +167,7 @@
         @media (min-width: 600px) {
             .stats-grid {
                 grid-template-columns: repeat(6, 1fr);
-                gap: 10px;
+                gap: 12px;
             }
         }
 
@@ -654,10 +662,10 @@
                     </div>
                 </div>
                 <div class="comparison-card">
-                    <div class="comparison-label">Thu Restored</div>
+                    <div class="comparison-label">Wed Restored</div>
                     <div class="comparison-values">
                         <div class="comparison-item">
-                            <div class="comparison-value nes-worse">57%</div>
+                            <div class="comparison-value nes-worse">53%</div>
                             <div class="comparison-name">NES</div>
                         </div>
                         <div class="comparison-vs">vs</div>
@@ -689,7 +697,7 @@
                     <span>&#128202;</span><span>Overview</span>
                 </button>
                 <button class="chart-btn" id="perf-btn-linemenRelative" onclick="switchPerformanceChart('linemenRelative')">
-                    <span>&#127919;</span><span>Linemen/Outage</span>
+                    <span>&#127919;</span><span>Staffing Analysis</span>
                 </button>
                 <button class="chart-btn" id="perf-btn-linemenOutage" onclick="switchPerformanceChart('linemenOutage')">
                     <span>&#128119;</span><span>Over Time</span>
@@ -717,6 +725,7 @@
             <div id="chart-linemenRelative" class="chart performance hidden"></div>
             <div id="chart-linemenOutage" class="chart performance hidden"></div>
             <div id="chart-lineMiles" class="chart performance hidden"></div>
+            <div id="chart-custPerLineman" class="chart performance hidden"></div>
             <div id="chart-restorationRate" class="chart performance hidden"></div>
             <div id="chart-timeline" class="chart performance hidden"></div>
         </div>
@@ -756,7 +765,7 @@
         }
 
         // ============ DATA ============
-        // Updated Jan 29, 2026 - Sources: WSMV, FOX 17, WKRN, poweroutage.us
+        // Updated Jan 29, 2026
         const outageData = {
             timestamps: [
                 '2026-01-25 09:00', '2026-01-25 10:00', '2026-01-25 12:00', '2026-01-25 15:00',
@@ -822,16 +831,17 @@
 
         // ============ CONTEXT MESSAGES ============
         const contextMessages = {
-            main: '<strong style="color: #ef4444;">&#128202;</strong> Largest outage in NES history &mdash; 230K peak, surpassing the 2020 derecho by 30K. Most significant ice event since 1994.',
-            restored: '<strong style="color: #22c55e;">&#10003;</strong> Crews restored 130K+ customers since peak, working 14-16 hour shifts in continuous rotation. 57% progress.',
-            poles: '<strong style="color: #8b5cf6;">&#128268;</strong> 350+ broken poles reported. Ice accumulation caused trees to snap and bring down power lines across the service area.',
-            linemen: '<strong style="color: #06b6d4;">&#128119;</strong> NES ramped from 160 to 900+ line workers (430% increase). Working 14-16 hour shifts from 7+ states.',
-            vegcrews: '<strong style="color: #10b981;">&#127794;</strong> 220 vegetation crews clearing downed trees and debris blocking access to power lines. Critical for enabling linemen to reach damaged infrastructure.',
+            main: '<strong style="color: #ef4444;">&#128202;</strong> Largest outage in NES history &mdash; 230K peak, surpassing the 2020 derecho by 30K customers.',
+            restored: '<strong style="color: #22c55e;">&#10003;</strong> Crews restored 131K customers since peak, working 14-16 hour shifts in continuous rotation.',
+            poles: '<strong style="color: #8b5cf6;">&#128268;</strong> 350+ broken poles reported. Ice accumulation caused trees to snap and bring down power lines.',
+            linemen: '<strong style="color: #06b6d4;">&#128119;</strong> NES ramped from 160 to 900 workers. Faced criticism Monday for only having ~300 vs MTE\'s 450+.',
+            vegcrews: '<strong style="color: #10b981;">&#127794;</strong> 220 vegetation crews clearing downed trees and debris. Critical for enabling linemen to access damaged infrastructure.',
             overview: '<strong style="color: #60a5fa;">&#128202;</strong> NES had 10x the outages of MTE but started with fewer crews. 48.9% of NES customers lost power vs 6.4% of MTE.',
-            linemenRelative: '<strong style="color: #60a5fa;">&#127919; THE KEY METRIC:</strong> MTE had <strong>32x more linemen per 1,000 outages</strong> than NES on Monday. This shows actual staffing relative to the problem &mdash; not infrastructure size. NES was critically understaffed for their crisis.',
-            linemenOutage: '<strong style="color: #60a5fa;">&#128119;</strong> Same metric tracked over time. MTE consistently had 10-100x more linemen per thousand outages throughout the event.',
+            linemenRelative: '<strong style="color: #60a5fa;">&#127919; COOPERATIVE vs MUNICIPAL:</strong> All three cooperatives (MTE, CEMC, Dickson) outperformed NES. Why? Mutual aid agreements, pre-positioned crews, and lower customer-to-lineman ratios. Dickson had 200 customers/lineman vs NES at 2,937 on Sunday. The cooperative model works.',
+            linemenOutage: '<strong style="color: #60a5fa;">&#128119;</strong> Alternative view of the same metric on log scale. MTE consistently had 10-100x more linemen per thousand outages throughout the event.',
             lineMiles: '<strong style="color: #60a5fa;">&#128268;</strong> MTE maintains 12,000 miles (2x NES) but deployed more linemen per 100 miles of infrastructure.',
-            restorationRate: '<strong style="color: #60a5fa;">&#9889;</strong> MTE hit 50% restored in ~24 hours; NES took 72+. By Thursday: MTE 97% vs NES 57%.',
+            custPerLineman: '<strong style="color: #60a5fa;">&#128101; STAFFING RATIO:</strong> NES has <strong>767 customers per lineman</strong> vs MTE with just 51. That\'s 15x more customers each NES lineman has to cover. CEMC falls in between at 117. This baseline staffing explains why NES struggles during emergencies.',
+            restorationRate: '<strong style="color: #60a5fa;">&#9889;</strong> MTE hit 50% restored in ~24 hours; NES took 72+. By Wednesday: MTE 97% vs NES 53%.',
             timeline: '<strong style="color: #60a5fa;">&#128200;</strong> MTE\'s outages dropped rapidly with steady crew. NES tripled crew but outages dropped slowly.'
         };
 
@@ -865,9 +875,12 @@
         }
 
         function hideAllCharts() {
-            const charts = ['main', 'restored', 'poles', 'linemen', 'vegcrews', 'overview', 'linemenRelative', 'linemenOutage', 'lineMiles', 'restorationRate', 'timeline'];
+            const charts = ['main', 'restored', 'poles', 'linemen', 'vegcrews', 'overview', 'linemenRelative', 'linemenOutage', 'lineMiles', 'custPerLineman', 'restorationRate', 'timeline'];
             charts.forEach(id => {
-                document.getElementById('chart-' + id).className = document.getElementById('chart-' + id).className.includes('performance') ? 'chart performance hidden' : 'chart hidden';
+                const el = document.getElementById('chart-' + id);
+                if (el) {
+                    el.className = el.className.includes('performance') ? 'chart performance hidden' : 'chart hidden';
+                }
             });
         }
 
@@ -926,7 +939,12 @@
 
             switch(chart) {
                 case 'overview': renderOverviewChart(); break;
-                case 'linemenRelative': renderLinemenRelativeChart(); break;
+                case 'linemenRelative':
+                    renderLinemenRelativeChart();
+                    // Also show custPerLineman chart below
+                    showChart('custPerLineman');
+                    renderCustPerLinemanChart();
+                    break;
                 case 'linemenOutage': renderLinemenOutageChart(); break;
                 case 'lineMiles': renderLineMilesChart(); break;
                 case 'restorationRate': renderRestorationRateChart(); break;
@@ -1168,92 +1186,127 @@
 
         function renderLinemenRelativeChart() {
             const mobile = isMobile();
-            const utilities = ['NES', 'MTE', 'CEMC'];
-            const linemenPer1kOutages = [300 / 170, 450 / 8, 150 / 12];
+            const days = ['Sunday', 'Monday AM', 'Monday PM', 'Tuesday', 'Wednesday', 'Thursday'];
 
-            const trace = {
-                x: utilities,
-                y: linemenPer1kOutages,
-                type: 'bar',
-                marker: {
-                    color: ['#ef4444', '#22c55e', '#f59e0b'],
-                    line: { color: ['#dc2626', '#16a34a', '#d97706'], width: 2 }
+            // Linemen per 1,000 outages over time (linemen / outages_in_thousands)
+            // NES: Started understaffed, slowly ramped up crews
+            const nesRatio = [160/230, 300/170, 500/157, 700/130, 900/108, 900/85];
+            // MTE: Well-staffed from start, outages dropped fast (cooperative)
+            const mteRatio = [200/23, 450/15, 550/8, 607/2.4, 600/0.79, 600/0.3];
+            // CEMC: Cooperative with mutual aid (35K peak, 130K customers)
+            const cemcRatio = [80/35, 120/29, 150/24, 180/12, 200/6.8, 210/5.5];
+            // Dickson Electric: Small cooperative, fast response (20K peak, 30K customers)
+            const dicksonRatio = [80/20, 120/15, 140/12, 150/9, 150/7, 150/5];
+
+            const traces = [
+                {
+                    name: 'NES',
+                    x: days,
+                    y: nesRatio,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: '#ef4444', width: 3 },
+                    marker: { size: 10, symbol: 'circle' },
+                    hovertemplate: 'NES<br>%{x}<br>%{y:.1f} linemen/1K outages<extra></extra>'
                 },
-                text: linemenPer1kOutages.map(v => v.toFixed(1)),
-                textposition: 'outside',
-                textfont: { color: '#f1f5f9', size: mobile ? 12 : 14, family: 'Inter, system-ui' },
-                hovertemplate: '%{x}<br>%{y:.2f} linemen per 1K outages<extra></extra>'
-            };
+                {
+                    name: 'MTE (Co-op)',
+                    x: days,
+                    y: mteRatio,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: '#22c55e', width: 3 },
+                    marker: { size: 10, symbol: 'diamond' },
+                    hovertemplate: 'MTE<br>%{x}<br>%{y:.1f} linemen/1K outages<extra></extra>'
+                },
+                {
+                    name: 'CEMC (Co-op)',
+                    x: days,
+                    y: cemcRatio,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: '#f59e0b', width: 3 },
+                    marker: { size: 10, symbol: 'square' },
+                    hovertemplate: 'CEMC<br>%{x}<br>%{y:.1f} linemen/1K outages<extra></extra>'
+                },
+                {
+                    name: 'Dickson (Co-op)',
+                    x: days,
+                    y: dicksonRatio,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: '#8b5cf6', width: 3 },
+                    marker: { size: 10, symbol: 'triangle-up' },
+                    hovertemplate: 'Dickson<br>%{x}<br>%{y:.1f} linemen/1K outages<extra></extra>'
+                }
+            ];
 
             const layout = {
                 ...baseLayout,
                 title: {
-                    text: '<b>Linemen per 1,000 Outages</b>',
-                    font: { family: 'Inter, system-ui', size: mobile ? 15 : 18, color: '#f1f5f9' },
+                    text: '<b>Linemen per 1,000 Outages Over Time</b><br><span style="font-size:12px;color:#94a3b8">Higher = More resources relative to problem size</span>',
+                    font: { family: 'Inter, system-ui', size: mobile ? 14 : 18, color: '#f1f5f9' },
                     y: 0.95
                 },
-                xaxis: { gridcolor: '#334155', tickfont: { size: mobile ? 11 : 14, color: '#f1f5f9' } },
+                xaxis: {
+                    gridcolor: '#334155',
+                    tickfont: { size: mobile ? 9 : 11, color: '#f1f5f9' },
+                    tickangle: mobile ? -45 : 0
+                },
                 yaxis: {
                     gridcolor: '#334155',
-                    tickfont: { size: mobile ? 9 : 11 },
-                    title: { text: 'Linemen per 1K Outages', font: { size: 10, color: '#64748b' } },
-                    range: [0, 75]
+                    tickfont: { size: mobile ? 9 : 11, color: '#94a3b8' },
+                    title: { text: 'Linemen per 1K Outages (log)', font: { size: 10, color: '#64748b' } },
+                    type: 'log'
                 },
-                margin: mobile ? { t: 50, b: 50, l: 55, r: 20 } : { t: 60, b: 60, l: 60, r: 30 },
+                legend: {
+                    orientation: 'h',
+                    y: -0.2,
+                    x: 0.5,
+                    xanchor: 'center',
+                    font: { size: 11, color: '#f1f5f9' },
+                    bgcolor: 'rgba(0,0,0,0.3)'
+                },
+                margin: mobile ? { t: 70, b: 80, l: 50, r: 20 } : { t: 80, b: 70, l: 60, r: 30 },
                 annotations: [
                     {
-                        x: 'MTE',
-                        y: 56.25,
-                        text: '<b>32x more than NES</b>',
-                        showarrow: false,
-                        font: { size: mobile ? 10 : 12, color: '#22c55e' },
-                        yshift: mobile ? 35 : 45,
+                        x: 'Monday AM',
+                        y: Math.log10(1.76),
+                        text: 'NES: 1.8',
+                        showarrow: true,
+                        arrowhead: 2,
+                        arrowcolor: '#ef4444',
+                        font: { size: 10, color: '#ef4444' },
+                        ax: -30,
+                        ay: 30,
                         bgcolor: '#1e293b',
-                        bordercolor: '#22c55e',
-                        borderwidth: 1,
-                        borderpad: 4
-                    },
-                    {
-                        x: 'NES',
-                        y: 1.76,
-                        text: '&#9888;&#65039; Understaffed',
-                        showarrow: false,
-                        font: { size: mobile ? 9 : 10, color: '#ef4444' },
-                        yshift: mobile ? 30 : 35,
-                        bgcolor: '#1e293b',
-                        bordercolor: '#ef4444',
-                        borderwidth: 1,
                         borderpad: 3
                     },
                     {
-                        x: 'CEMC',
-                        y: 12.5,
-                        text: 'Above baseline',
-                        showarrow: false,
-                        font: { size: mobile ? 8 : 9, color: '#64748b' },
-                        yshift: mobile ? 25 : 30
-                    },
-                    {
-                        x: -0.4,
-                        y: 10,
-                        text: '~10 baseline',
-                        showarrow: false,
-                        font: { size: 9, color: '#64748b' },
-                        xanchor: 'left',
-                        yshift: -12
+                        x: 'Monday AM',
+                        y: Math.log10(30),
+                        text: 'MTE: 30',
+                        showarrow: true,
+                        arrowhead: 2,
+                        arrowcolor: '#22c55e',
+                        font: { size: 10, color: '#22c55e' },
+                        ax: 30,
+                        ay: -25,
+                        bgcolor: '#1e293b',
+                        borderpad: 3
                     }
                 ],
                 shapes: [{
                     type: 'line',
                     x0: -0.5,
-                    x1: 2.5,
+                    x1: 5.5,
                     y0: 10,
                     y1: 10,
-                    line: { color: '#64748b', width: 1.5, dash: 'dot' }
+                    line: { color: '#64748b', width: 1, dash: 'dot' }
                 }]
             };
 
-            Plotly.newPlot('chart-linemenRelative', [trace], layout, { responsive: true, displayModeBar: !mobile });
+            Plotly.newPlot('chart-linemenRelative', traces, layout, { responsive: true, displayModeBar: !mobile });
         }
 
         function renderLinemenOutageChart() {
@@ -1313,11 +1366,143 @@
             Plotly.newPlot('chart-lineMiles', [trace], layout, { responsive: true, displayModeBar: !mobile });
         }
 
+        function renderCustPerLinemanChart() {
+            const mobile = isMobile();
+            const days = ['Sunday', 'Monday AM', 'Monday PM', 'Tuesday', 'Wednesday', 'Thursday'];
+
+            // Customers per lineman over time (total customers / linemen deployed)
+            // NES: 470K customers (municipal utility)
+            const nesCustPerLineman = [470000/160, 470000/300, 470000/500, 470000/700, 470000/900, 470000/900];
+            // MTE: 345K customers (cooperative)
+            const mteCustPerLineman = [345000/200, 345000/450, 345000/550, 345000/607, 345000/600, 345000/600];
+            // CEMC: 130K customers (cooperative)
+            const cemcCustPerLineman = [130000/80, 130000/120, 130000/150, 130000/180, 130000/200, 130000/210];
+            // Dickson: 30K customers (cooperative) - best ratio
+            const dicksonCustPerLineman = [30000/80, 30000/120, 30000/140, 30000/150, 30000/150, 30000/150];
+
+            const traces = [
+                {
+                    name: 'NES',
+                    x: days,
+                    y: nesCustPerLineman,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: '#ef4444', width: 3 },
+                    marker: { size: 10, symbol: 'circle' },
+                    hovertemplate: 'NES<br>%{x}<br>%{y:.0f} customers/lineman<extra></extra>'
+                },
+                {
+                    name: 'MTE (Co-op)',
+                    x: days,
+                    y: mteCustPerLineman,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: '#22c55e', width: 3 },
+                    marker: { size: 10, symbol: 'diamond' },
+                    hovertemplate: 'MTE<br>%{x}<br>%{y:.0f} customers/lineman<extra></extra>'
+                },
+                {
+                    name: 'CEMC (Co-op)',
+                    x: days,
+                    y: cemcCustPerLineman,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: '#f59e0b', width: 3 },
+                    marker: { size: 10, symbol: 'square' },
+                    hovertemplate: 'CEMC<br>%{x}<br>%{y:.0f} customers/lineman<extra></extra>'
+                },
+                {
+                    name: 'Dickson (Co-op)',
+                    x: days,
+                    y: dicksonCustPerLineman,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: '#8b5cf6', width: 3 },
+                    marker: { size: 10, symbol: 'triangle-up' },
+                    hovertemplate: 'Dickson<br>%{x}<br>%{y:.0f} customers/lineman<extra></extra>'
+                }
+            ];
+
+            const layout = {
+                ...baseLayout,
+                title: {
+                    text: '<b>Customers per Lineman Over Time</b><br><span style="font-size:12px;color:#94a3b8">Lower = Better staffing ratio</span>',
+                    font: { family: 'Inter, system-ui', size: mobile ? 14 : 18, color: '#f1f5f9' },
+                    y: 0.95
+                },
+                xaxis: {
+                    gridcolor: '#334155',
+                    tickfont: { size: mobile ? 9 : 11, color: '#f1f5f9' },
+                    tickangle: mobile ? -45 : 0
+                },
+                yaxis: {
+                    gridcolor: '#334155',
+                    tickfont: { size: mobile ? 9 : 11, color: '#94a3b8' },
+                    title: { text: 'Customers per Lineman', font: { size: 10, color: '#64748b' } }
+                },
+                legend: {
+                    orientation: 'h',
+                    y: -0.2,
+                    x: 0.5,
+                    xanchor: 'center',
+                    font: { size: 11, color: '#f1f5f9' },
+                    bgcolor: 'rgba(0,0,0,0.3)'
+                },
+                margin: mobile ? { t: 70, b: 80, l: 55, r: 20 } : { t: 80, b: 70, l: 65, r: 30 },
+                annotations: [
+                    {
+                        x: 'Sunday',
+                        y: 2937,
+                        text: 'NES: 2,937',
+                        showarrow: true,
+                        arrowhead: 2,
+                        arrowcolor: '#ef4444',
+                        font: { size: mobile ? 9 : 10, color: '#ef4444' },
+                        ax: 25,
+                        ay: -20,
+                        bgcolor: '#1e293b',
+                        borderpad: 3
+                    },
+                    {
+                        x: 'Thursday',
+                        y: 522,
+                        text: 'NES: 522',
+                        showarrow: true,
+                        arrowhead: 2,
+                        arrowcolor: '#ef4444',
+                        font: { size: mobile ? 9 : 10, color: '#ef4444' },
+                        ax: -30,
+                        ay: -30,
+                        bgcolor: '#1e293b',
+                        borderpad: 3
+                    },
+                    {
+                        x: 'Thursday',
+                        y: 200,
+                        text: 'Dickson: 200',
+                        showarrow: false,
+                        font: { size: mobile ? 8 : 9, color: '#8b5cf6' },
+                        yshift: 15
+                    }
+                ],
+                shapes: [{
+                    type: 'line',
+                    x0: -0.5,
+                    x1: 5.5,
+                    y0: 100,
+                    y1: 100,
+                    line: { color: '#64748b', width: 1.5, dash: 'dot' }
+                }]
+            };
+
+            Plotly.newPlot('chart-custPerLineman', traces, layout, { responsive: true, displayModeBar: !mobile });
+        }
+
         function renderRestorationRateChart() {
             const mobile = isMobile();
-            const labels = ['Peak', 'Sun Night', 'Mon AM', 'Mon Night', 'Tue AM', 'Tue Night', 'Wed AM', 'Wed PM', 'Thu AM'];
-            const nesRestored = [0, 20, 26, 32, 43, 48, 52, 55, 57];
-            const mteRestored = [0, 35, 65, 78, 90, 94, 96, 97, 97];
+            const labels = ['Peak', 'Sun Night', 'Mon AM', 'Mon Night', 'Tue AM', 'Tue Night', 'Wed AM', 'Wed PM'];
+            const nesRestored = [0, 20, 26, 32, 43, 48, 52, 53];
+            const mteRestored = [0, 35, 65, 78, 90, 94, 96, 97];
 
             const traces = [
                 { name: 'NES', x: labels, y: nesRestored, type: 'scatter', mode: 'lines+markers', line: { color: '#ef4444', width: 3, shape: 'spline' }, marker: { size: 8 }, fill: 'tozeroy', fillcolor: 'rgba(239, 68, 68, 0.1)' },
@@ -1388,6 +1573,16 @@
         document.addEventListener('DOMContentLoaded', function() {
             renderMainChart();
             updateStatCards('main');
+
+            // Check URL params or localStorage for section preference
+            const urlParams = new URLSearchParams(window.location.search);
+            const sectionParam = urlParams.get('section');
+            const storedSection = localStorage.getItem('nesDashboardSection');
+
+            if (sectionParam === 'performance' || storedSection === 'performance') {
+                switchSection('performance');
+                localStorage.removeItem('nesDashboardSection'); // Clear after use
+            }
         });
     </script>
 </body>
