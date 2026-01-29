@@ -207,7 +207,7 @@
 
         @media (min-width: 600px) {
             .stats-grid {
-                grid-template-columns: repeat(5, 1fr);
+                grid-template-columns: repeat(6, 1fr);
                 gap: 12px;
             }
         }
@@ -629,6 +629,13 @@
                     <div class="stat-sublabel">Deployed</div>
                     <div class="stat-tap" style="color: #06b6d4;">TAP &rarr;</div>
                 </div>
+                <div class="stat-card" id="stat-crewStatus" onclick="switchOutageChart('crewStatus')" style="--stat-color: #10b981; --stat-glow: rgba(16, 185, 129, 0.2);">
+                    <div class="stat-icon">&#128202;</div>
+                    <div class="stat-value" id="crew-coverage-value" style="color: #10b981;">--%</div>
+                    <div class="stat-label">Crew Coverage</div>
+                    <div class="stat-sublabel">Live Data</div>
+                    <div class="stat-tap" style="color: #10b981;">TAP &rarr;</div>
+                </div>
             </div>
 
             <!-- Linemen Banner (mobile) -->
@@ -746,6 +753,7 @@
             <div id="chart-restored" class="chart hidden"></div>
             <div id="chart-poles" class="chart hidden"></div>
             <div id="chart-linemen" class="chart hidden"></div>
+            <div id="chart-crewStatus" class="chart hidden"></div>
             <div id="chart-overview" class="chart performance hidden"></div>
             <div id="chart-linemenRelative" class="chart performance hidden"></div>
             <div id="chart-linemenOutage" class="chart performance hidden"></div>
@@ -870,13 +878,10 @@
                 restoredCard.textContent = formatted;
             }
 
-            // Update linemen card with crew coverage info
-            const linemenCard = document.querySelector('#stat-linemen .stat-value');
-            if (linemenCard && summary.crewCoveragePercent !== undefined) {
-                // Show how many outages have crews assigned
-                linemenCard.textContent = summary.crewCoveragePercent + '%';
-                const label = document.querySelector('#stat-linemen .stat-label');
-                if (label) label.textContent = 'Crew Coverage';
+            // Update crew coverage stat card with live data
+            const crewCoverageCard = document.getElementById('crew-coverage-value');
+            if (crewCoverageCard && summary.crewCoveragePercent !== undefined) {
+                crewCoverageCard.textContent = summary.crewCoveragePercent + '%';
             }
         }
 
@@ -942,6 +947,7 @@
             restored: '<strong style="color: #22c55e;">&#10003;</strong> Crews restored 122K customers since peak, working 14-16 hour shifts in continuous rotation.',
             poles: '<strong style="color: #8b5cf6;">&#128268;</strong> 280+ broken poles reported. Ice accumulation caused trees to snap and bring down power lines.',
             linemen: '<strong style="color: #06b6d4;">&#128119;</strong> NES ramped from 160 to 900 workers. Faced criticism Monday for only having ~300 vs MTE\'s 450+.',
+            crewStatus: '<strong style="color: #10b981;">&#9889; LIVE DATA:</strong> Real-time comparison of outages with crews assigned vs waiting. "Assigned" means a crew is on the way or actively working. "Unassigned" means the outage is queued but no crew dispatched yet.',
             overview: '<strong style="color: #60a5fa;">&#128202;</strong> NES had 10x the outages of MTE but started with fewer crews. 48.9% of NES customers lost power vs 6.4% of MTE.',
             linemenRelative: '<strong style="color: #60a5fa;">&#127919; COOPERATIVE vs MUNICIPAL:</strong> All three cooperatives (MTE, CEMC, Dickson) outperformed NES. Why? Mutual aid agreements, pre-positioned crews, and lower customer-to-lineman ratios. Dickson had 200 customers/lineman vs NES at 2,937 on Sunday. The cooperative model works.',
             linemenOutage: '<strong style="color: #60a5fa;">&#128119;</strong> Alternative view of the same metric on log scale. MTE consistently had 10-100x more linemen per thousand outages throughout the event.',
@@ -981,7 +987,7 @@
         }
 
         function hideAllCharts() {
-            const charts = ['main', 'restored', 'poles', 'linemen', 'overview', 'linemenRelative', 'linemenOutage', 'lineMiles', 'custPerLineman', 'restorationRate', 'timeline'];
+            const charts = ['main', 'restored', 'poles', 'linemen', 'crewStatus', 'overview', 'linemenRelative', 'linemenOutage', 'lineMiles', 'custPerLineman', 'restorationRate', 'timeline'];
             charts.forEach(id => {
                 const el = document.getElementById('chart-' + id);
                 if (el) {
@@ -1008,11 +1014,12 @@
                 case 'restored': renderRestoredChart(); break;
                 case 'poles': renderPolesChart(); break;
                 case 'linemen': renderLinemenChart(); break;
+                case 'crewStatus': renderCrewStatusChart(); break;
             }
         }
 
         function updateStatCards(activeChart) {
-            const cards = ['main', 'current', 'restored', 'poles', 'linemen'];
+            const cards = ['main', 'current', 'restored', 'poles', 'linemen', 'crewStatus'];
             cards.forEach(id => {
                 const el = document.getElementById('stat-' + id);
                 if (el) {
@@ -1215,6 +1222,220 @@
             };
 
             Plotly.newPlot('chart-linemen', [trace], layout, { responsive: true, displayModeBar: !mobile, scrollZoom: true });
+        }
+
+        // ============ LIVE CREW STATUS CHART ============
+        async function renderCrewStatusChart() {
+            const mobile = isMobile();
+            const chartEl = document.getElementById('chart-crewStatus');
+
+            // Show loading state
+            chartEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;font-size:14px;">Loading live data...</div>';
+
+            try {
+                // Fetch live data from the NES API
+                let response = await fetch('/api/nes-outages');
+
+                // Fallback to direct API if Netlify function unavailable
+                if (!response.ok) {
+                    response = await fetch('https://utilisocial.io/datacapable/v2/p/NES/map/events');
+                    if (!response.ok) throw new Error('API error');
+
+                    const rawEvents = await response.json();
+                    renderCrewStatusFromData(processEventsForCrewStatus(rawEvents), mobile);
+                } else {
+                    const data = await response.json();
+                    renderCrewStatusFromData(data, mobile);
+                }
+            } catch (error) {
+                console.error('Failed to fetch crew status data:', error);
+                chartEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#ef4444;font-size:14px;">Failed to load live data. <button onclick="renderCrewStatusChart()" style="margin-left:10px;padding:6px 12px;background:#334155;border:none;color:#f1f5f9;border-radius:6px;cursor:pointer;">Retry</button></div>';
+            }
+        }
+
+        function processEventsForCrewStatus(events) {
+            const outages = events || [];
+            let assigned = { count: 0, affected: 0, avgDuration: 0, durations: [] };
+            let unassigned = { count: 0, affected: 0, avgDuration: 0, durations: [] };
+            const now = Date.now();
+
+            outages.forEach(event => {
+                const isAssigned = event.status === 'Assigned';
+                const affected = event.numPeople || 0;
+                const duration = event.startTime ? Math.round((now - event.startTime) / 60000) : 0;
+
+                if (isAssigned) {
+                    assigned.count++;
+                    assigned.affected += affected;
+                    assigned.durations.push(duration);
+                } else {
+                    unassigned.count++;
+                    unassigned.affected += affected;
+                    unassigned.durations.push(duration);
+                }
+            });
+
+            assigned.avgDuration = assigned.durations.length > 0
+                ? Math.round(assigned.durations.reduce((a, b) => a + b, 0) / assigned.durations.length)
+                : 0;
+            unassigned.avgDuration = unassigned.durations.length > 0
+                ? Math.round(unassigned.durations.reduce((a, b) => a + b, 0) / unassigned.durations.length)
+                : 0;
+
+            const totalOutages = assigned.count + unassigned.count;
+            const crewCoveragePercent = totalOutages > 0 ? Math.round((assigned.count / totalOutages) * 100) : 100;
+
+            return {
+                timestamp: new Date().toISOString(),
+                summary: {
+                    totalOutages,
+                    totalAffected: assigned.affected + unassigned.affected,
+                    assignedOutages: assigned.count,
+                    unassignedOutages: unassigned.count,
+                    crewCoveragePercent
+                },
+                assigned,
+                unassigned
+            };
+        }
+
+        function renderCrewStatusFromData(data, mobile) {
+            // Extract data - handle both API formats
+            let assigned, unassigned, summary;
+
+            if (data.assigned && data.unassigned) {
+                // Direct processed format
+                assigned = data.assigned;
+                unassigned = data.unassigned;
+                summary = data.summary;
+            } else if (data.outages) {
+                // Process from outages array
+                const processed = processEventsForCrewStatus(data.outages);
+                assigned = processed.assigned;
+                unassigned = processed.unassigned;
+                summary = processed.summary;
+            } else {
+                // Fallback - use summary data
+                summary = data.summary || {};
+                assigned = {
+                    count: summary.assignedOutages || 0,
+                    affected: Math.round((summary.totalAffected || 0) * (summary.crewCoveragePercent || 0) / 100)
+                };
+                unassigned = {
+                    count: summary.unassignedOutages || (summary.totalOutages - summary.assignedOutages) || 0,
+                    affected: Math.round((summary.totalAffected || 0) * (100 - (summary.crewCoveragePercent || 0)) / 100)
+                };
+            }
+
+            // Update the crew coverage stat card
+            const coverageEl = document.getElementById('crew-coverage-value');
+            if (coverageEl && summary) {
+                coverageEl.textContent = (summary.crewCoveragePercent || 0) + '%';
+            }
+
+            // Create subplot layout with pie chart and bar charts
+            const traces = [
+                // Donut chart for event counts
+                {
+                    type: 'pie',
+                    values: [assigned.count || 0, unassigned.count || 0],
+                    labels: ['Crew Assigned', 'Waiting for Crew'],
+                    marker: {
+                        colors: ['#f59e0b', '#ef4444']
+                    },
+                    hole: 0.5,
+                    textinfo: 'label+value',
+                    textposition: 'outside',
+                    textfont: { size: mobile ? 10 : 12, color: '#f1f5f9' },
+                    hovertemplate: '%{label}<br>%{value} events<br>%{percent}<extra></extra>',
+                    domain: { x: [0, 0.45], y: [0.1, 0.9] },
+                    name: 'Events'
+                },
+                // Bar chart for affected customers
+                {
+                    type: 'bar',
+                    x: ['Crew Assigned', 'Waiting for Crew'],
+                    y: [assigned.affected || 0, unassigned.affected || 0],
+                    marker: {
+                        color: ['#f59e0b', '#ef4444'],
+                        line: { color: '#1e293b', width: 2 }
+                    },
+                    text: [(assigned.affected || 0).toLocaleString(), (unassigned.affected || 0).toLocaleString()],
+                    textposition: 'outside',
+                    textfont: { size: mobile ? 11 : 13, color: '#f1f5f9' },
+                    hovertemplate: '%{x}<br>%{y:,.0f} customers affected<extra></extra>',
+                    xaxis: 'x2',
+                    yaxis: 'y2',
+                    name: 'Customers Affected',
+                    showlegend: false
+                }
+            ];
+
+            const totalEvents = (assigned.count || 0) + (unassigned.count || 0);
+            const totalAffected = (assigned.affected || 0) + (unassigned.affected || 0);
+
+            const layout = {
+                ...baseLayout,
+                title: {
+                    text: `<b>Assigned vs Unassigned Outages</b><br><span style="font-size:12px;color:#94a3b8">Live NES Data • ${totalEvents} Active Events • ${totalAffected.toLocaleString()} Customers Affected</span>`,
+                    font: { family: 'Inter, system-ui', size: mobile ? 14 : 18, color: '#f1f5f9' },
+                    y: 0.98
+                },
+                grid: { rows: 1, columns: 2, pattern: 'independent' },
+                xaxis2: {
+                    domain: [0.55, 1],
+                    anchor: 'y2',
+                    gridcolor: '#334155',
+                    tickfont: { size: mobile ? 9 : 11, color: '#f1f5f9' }
+                },
+                yaxis2: {
+                    domain: [0.15, 0.85],
+                    anchor: 'x2',
+                    gridcolor: '#334155',
+                    tickfont: { size: mobile ? 9 : 11, color: '#94a3b8' },
+                    title: { text: 'Customers Affected', font: { size: 10, color: '#64748b' } }
+                },
+                annotations: [
+                    {
+                        x: 0.22,
+                        y: 0.5,
+                        text: `<b>${summary.crewCoveragePercent || 0}%</b><br>Coverage`,
+                        showarrow: false,
+                        font: { size: mobile ? 16 : 22, color: '#10b981' },
+                        xref: 'paper',
+                        yref: 'paper'
+                    },
+                    {
+                        x: 0.22,
+                        y: 0.02,
+                        text: '<b>Events by Status</b>',
+                        showarrow: false,
+                        font: { size: mobile ? 10 : 12, color: '#94a3b8' },
+                        xref: 'paper',
+                        yref: 'paper'
+                    },
+                    {
+                        x: 0.775,
+                        y: 0.02,
+                        text: '<b>Customers Affected</b>',
+                        showarrow: false,
+                        font: { size: mobile ? 10 : 12, color: '#94a3b8' },
+                        xref: 'paper',
+                        yref: 'paper'
+                    }
+                ],
+                margin: mobile ? { t: 70, b: 50, l: 20, r: 20 } : { t: 80, b: 60, l: 30, r: 30 },
+                showlegend: false
+            };
+
+            Plotly.newPlot('chart-crewStatus', traces, layout, { responsive: true, displayModeBar: !mobile });
+
+            // Update context message with live stats
+            const contextBox = document.getElementById('context-box');
+            if (contextBox && document.getElementById('chart-crewStatus').className.indexOf('hidden') === -1) {
+                const waitingPercent = totalEvents > 0 ? Math.round((unassigned.count / totalEvents) * 100) : 0;
+                contextBox.innerHTML = `<strong style="color: #10b981;">&#9889; LIVE DATA:</strong> ${summary.crewCoveragePercent || 0}% of outages have crews assigned. <strong style="color: #f59e0b;">${(assigned.count || 0).toLocaleString()}</strong> events with crews working (${(assigned.affected || 0).toLocaleString()} customers). <strong style="color: #ef4444;">${(unassigned.count || 0).toLocaleString()}</strong> events still waiting (${(unassigned.affected || 0).toLocaleString()} customers). Updated ${new Date(data.timestamp || Date.now()).toLocaleTimeString()}.`;
+            }
         }
 
         function renderOverviewChart() {
