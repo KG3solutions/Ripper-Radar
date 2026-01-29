@@ -171,7 +171,7 @@ export default async (request, context) => {
 };
 
 // Netlify scheduled function config
+// Note: Scheduled functions cannot have custom paths - use the function name as endpoint
 export const config = {
-  path: "/api/outage-data",
   schedule: "@hourly" // Run every hour (Netlify's minimum for free tier)
 };
