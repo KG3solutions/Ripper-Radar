@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overlay Calibration Tool</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #f1f5f9;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 320px;
+            background: #1e293b;
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid #334155;
+        }
+
+        .sidebar h1 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: #f59e0b;
+        }
+
+        .sidebar p {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 20px;
+        }
+
+        .section {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #f59e0b;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Scale Controls */
+        .scale-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .scale-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .scale-btn.minus {
+            background: #ef4444;
+            color: white;
+        }
+
+        .scale-btn.plus {
+            background: #22c55e;
+            color: white;
+        }
+
+        .scale-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .scale-btn:active {
+            transform: scale(0.95);
+        }
+
+        .scale-info {
+            text-align: center;
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        /* Opacity Slider */
+        .opacity-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .opacity-label {
+            font-size: 12px;
+            color: #94a3b8;
+            min-width: 60px;
+        }
+
+        .opacity-slider {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #334155;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .opacity-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #f59e0b;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* Landmark Pinning */
+        .pin-mode {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 12px;
+        }
+
+        .pin-mode.inactive {
+            background: #334155;
+            color: #94a3b8;
+        }
+
+        .pin-mode.overlay {
+            background: #3b82f6;
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+
+        .pin-mode.map {
+            background: #22c55e;
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .pin-btn {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #64748b;
+            border-radius: 6px;
+            background: transparent;
+            color: #f1f5f9;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 12px;
+        }
+
+        .pin-btn:hover {
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .pin-btn.active {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .pins-list {
+            font-size: 11px;
+            color: #94a3b8;
+        }
+
+        .pin-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .pin-item:last-child {
+            border-bottom: none;
+        }
+
+        .pin-item .label {
+            color: #f59e0b;
+        }
+
+        .apply-pins-btn {
+            width: 100%;
+            padding: 10px;
+            background: #8b5cf6;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+
+        .apply-pins-btn:disabled {
+            background: #475569;
+            cursor: not-allowed;
+        }
+
+        .clear-pins-btn {
+            width: 100%;
+            padding: 8px;
+            background: transparent;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            color: #94a3b8;
+            font-size: 11px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        /* Coordinates Display */
+        .coords {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 11px;
+            line-height: 1.8;
+        }
+
+        .coord-row {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .coord-label {
+            color: #64748b;
+        }
+
+        .coord-value {
+            color: #22c55e;
+        }
+
+        /* Action Buttons */
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+
+        .action-btn.primary {
+            background: #f59e0b;
+            color: #0f172a;
+        }
+
+        .action-btn.secondary {
+            background: #334155;
+            color: #f1f5f9;
+        }
+
+        .action-btn.danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .action-btn:hover {
+            filter: brightness(1.1);
+        }
+
+        /* Code Output */
+        .code-output {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 10px;
+            color: #22c55e;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        /* Map Container */
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Map Instructions */
+        .map-instructions {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.9);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #f1f5f9;
+            z-index: 1000;
+            text-align: center;
+            border: 1px solid #334155;
+        }
+
+        .map-instructions.pinning {
+            background: rgba(59, 130, 246, 0.9);
+            border-color: #3b82f6;
+        }
+
+        /* Crosshair cursor for pinning */
+        .pinning-mode {
+            cursor: crosshair !important;
+        }
+
+        .pinning-mode * {
+            cursor: crosshair !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h1>Overlay Calibration Tool</h1>
+            <p>Align the NES outage map overlay with the real map using scale, drag, or landmark pinning.</p>
+
+            <!-- Scale Section -->
+            <div class="section">
+                <div class="section-title">Scale (Proportional)</div>
+                <div class="scale-controls">
+                    <button class="scale-btn minus" onclick="scaleOverlay(0.95)">-5%</button>
+                    <button class="scale-btn plus" onclick="scaleOverlay(1.05)">+5%</button>
+                </div>
+                <div class="scale-controls">
+                    <button class="scale-btn minus" onclick="scaleOverlay(0.99)" style="font-size:14px;">-1%</button>
+                    <button class="scale-btn plus" onclick="scaleOverlay(1.01)" style="font-size:14px;">+1%</button>
+                </div>
+                <div class="scale-info">Scales from center, maintains aspect ratio</div>
+            </div>
+
+            <!-- Opacity Section -->
+            <div class="section">
+                <div class="section-title">Opacity</div>
+                <div class="opacity-row">
+                    <span class="opacity-label">0%</span>
+                    <input type="range" class="opacity-slider" id="opacity-slider" min="0" max="100" value="60" oninput="updateOpacity(this.value)">
+                    <span class="opacity-label">100%</span>
+                </div>
+            </div>
+
+            <!-- Landmark Pinning Section -->
+            <div class="section">
+                <div class="section-title">Landmark Pinning</div>
+                <div class="pin-mode inactive" id="pin-status">
+                    Click "Add Pin" to start
+                </div>
+                <button class="pin-btn" id="add-pin-btn" onclick="startPinning()">
+                    + Add Landmark Pin
+                </button>
+                <div class="pins-list" id="pins-list">
+                    <em>No pins yet. Add at least 2 pins to calibrate.</em>
+                </div>
+                <button class="apply-pins-btn" id="apply-pins-btn" onclick="applyPins()" disabled>
+                    Apply Pins & Calibrate
+                </button>
+                <button class="clear-pins-btn" onclick="clearPins()">Clear All Pins</button>
+            </div>
+
+            <!-- Current Bounds -->
+            <div class="section">
+                <div class="section-title">Current Bounds</div>
+                <div class="coords">
+                    <div class="coord-row">
+                        <span class="coord-label">North:</span>
+                        <span class="coord-value" id="coord-north">--</span>
+                    </div>
+                    <div class="coord-row">
+                        <span class="coord-label">South:</span>
+                        <span class="coord-value" id="coord-south">--</span>
+                    </div>
+                    <div class="coord-row">
+                        <span class="coord-label">East:</span>
+                        <span class="coord-value" id="coord-east">--</span>
+                    </div>
+                    <div class="coord-row">
+                        <span class="coord-label">West:</span>
+                        <span class="coord-value" id="coord-west">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="section">
+                <div class="section-title">Actions</div>
+                <button class="action-btn primary" onclick="copyCode()">Copy Code for outage-map.html</button>
+                <button class="action-btn secondary" onclick="resetBounds()">Reset to Default</button>
+            </div>
+
+            <!-- Code Output -->
+            <div class="section">
+                <div class="section-title">Generated Code</div>
+                <div class="code-output" id="code-output">
+Click "Copy Code" to generate...
+                </div>
+            </div>
+        </div>
+
+        <div class="map-container">
+            <div class="map-instructions" id="map-instructions">
+                Drag the orange center marker to move. Use sidebar controls to scale.
+            </div>
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Current bounds state
+        let currentBounds = {
+            south: 35.97,
+            north: 36.35,
+            west: -86.97,
+            east: -86.50
+        };
+
+        // Original aspect ratio
+        let aspectRatio = (currentBounds.east - currentBounds.west) / (currentBounds.north - currentBounds.south);
+
+        // Map and overlay
+        let map, outageOverlay, boundingRect, centerMarker;
+        let cornerMarkers = {};
+
+        // Pinning state
+        let pinningMode = null; // null, 'overlay', 'map'
+        let pins = []; // Array of {overlay: [lat, lng], map: [lat, lng]}
+        let currentPin = null;
+        let pinMarkers = [];
+
+        // Initialize map
+        function initMap() {
+            map = L.map('map', {
+                center: [36.16, -86.78],
+                zoom: 11,
+                zoomControl: true
+            });
+
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap, &copy; CARTO',
+                maxZoom: 19
+            }).addTo(map);
+
+            // Add overlay
+            outageOverlay = L.imageOverlay(
+                'assets/nes-outage-map.jpeg',
+                getBoundsArray(),
+                { opacity: 0.6 }
+            ).addTo(map);
+
+            // Add bounding rectangle
+            boundingRect = L.rectangle(getBoundsArray(), {
+                color: '#f59e0b',
+                weight: 2,
+                fill: false,
+                dashArray: '5, 5'
+            }).addTo(map);
+
+            // Add center marker for dragging
+            createCenterMarker();
+
+            // Add corner markers
+            createCornerMarkers();
+
+            // Map click handler for pinning
+            map.on('click', handleMapClick);
+
+            updateCoordsDisplay();
+        }
+
+        function getBoundsArray() {
+            return [[currentBounds.south, currentBounds.west], [currentBounds.north, currentBounds.east]];
+        }
+
+        function createCenterMarker() {
+            const centerLat = (currentBounds.north + currentBounds.south) / 2;
+            const centerLng = (currentBounds.east + currentBounds.west) / 2;
+
+            const icon = L.divIcon({
+                className: 'center-marker',
+                iconSize: [36, 36],
+                iconAnchor: [18, 18],
+                html: '<div style="width:36px;height:36px;background:#f59e0b;border:3px solid white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:move;box-shadow:0 2px 8px rgba(0,0,0,0.3);">✥</div>'
+            });
+
+            centerMarker = L.marker([centerLat, centerLng], {
+                icon: icon,
+                draggable: true,
+                zIndexOffset: 1001
+            }).addTo(map);
+
+            let dragStart = null;
+            let boundsStart = null;
+
+            centerMarker.on('dragstart', function(e) {
+                dragStart = e.target.getLatLng();
+                boundsStart = { ...currentBounds };
+            });
+
+            centerMarker.on('drag', function(e) {
+                const newPos = e.target.getLatLng();
+                const deltaLat = newPos.lat - dragStart.lat;
+                const deltaLng = newPos.lng - dragStart.lng;
+
+                currentBounds.north = boundsStart.north + deltaLat;
+                currentBounds.south = boundsStart.south + deltaLat;
+                currentBounds.east = boundsStart.east + deltaLng;
+                currentBounds.west = boundsStart.west + deltaLng;
+
+                updateOverlay();
+            });
+        }
+
+        function createCornerMarkers() {
+            const corners = {
+                nw: { pos: [currentBounds.north, currentBounds.west], color: '#ef4444' },
+                ne: { pos: [currentBounds.north, currentBounds.east], color: '#22c55e' },
+                sw: { pos: [currentBounds.south, currentBounds.west], color: '#3b82f6' },
+                se: { pos: [currentBounds.south, currentBounds.east], color: '#8b5cf6' }
+            };
+
+            for (const [corner, data] of Object.entries(corners)) {
+                const icon = L.divIcon({
+                    className: 'corner-marker',
+                    iconSize: [16, 16],
+                    iconAnchor: [8, 8],
+                    html: `<div style="width:16px;height:16px;background:${data.color};border:2px solid white;border-radius:50%;cursor:pointer;"></div>`
+                });
+
+                cornerMarkers[corner] = L.marker(data.pos, {
+                    icon: icon,
+                    draggable: true,
+                    zIndexOffset: 1000
+                }).addTo(map);
+
+                cornerMarkers[corner].on('drag', function(e) {
+                    updateBoundsFromCorner(corner, e.target.getLatLng());
+                });
+            }
+        }
+
+        function updateBoundsFromCorner(corner, latlng) {
+            if (corner === 'nw') {
+                currentBounds.north = latlng.lat;
+                currentBounds.west = latlng.lng;
+            } else if (corner === 'ne') {
+                currentBounds.north = latlng.lat;
+                currentBounds.east = latlng.lng;
+            } else if (corner === 'sw') {
+                currentBounds.south = latlng.lat;
+                currentBounds.west = latlng.lng;
+            } else if (corner === 'se') {
+                currentBounds.south = latlng.lat;
+                currentBounds.east = latlng.lng;
+            }
+            updateOverlay();
+        }
+
+        function updateOverlay() {
+            outageOverlay.setBounds(getBoundsArray());
+            boundingRect.setBounds(getBoundsArray());
+            syncMarkers();
+            updateCoordsDisplay();
+        }
+
+        function syncMarkers() {
+            // Update center marker
+            const centerLat = (currentBounds.north + currentBounds.south) / 2;
+            const centerLng = (currentBounds.east + currentBounds.west) / 2;
+            centerMarker.setLatLng([centerLat, centerLng]);
+
+            // Update corner markers
+            if (cornerMarkers.nw) cornerMarkers.nw.setLatLng([currentBounds.north, currentBounds.west]);
+            if (cornerMarkers.ne) cornerMarkers.ne.setLatLng([currentBounds.north, currentBounds.east]);
+            if (cornerMarkers.sw) cornerMarkers.sw.setLatLng([currentBounds.south, currentBounds.west]);
+            if (cornerMarkers.se) cornerMarkers.se.setLatLng([currentBounds.south, currentBounds.east]);
+        }
+
+        // Scale overlay from center
+        function scaleOverlay(factor) {
+            const centerLat = (currentBounds.north + currentBounds.south) / 2;
+            const centerLng = (currentBounds.east + currentBounds.west) / 2;
+
+            const halfHeight = (currentBounds.north - currentBounds.south) / 2;
+            const halfWidth = (currentBounds.east - currentBounds.west) / 2;
+
+            const newHalfHeight = halfHeight * factor;
+            const newHalfWidth = halfWidth * factor;
+
+            currentBounds.north = centerLat + newHalfHeight;
+            currentBounds.south = centerLat - newHalfHeight;
+            currentBounds.east = centerLng + newHalfWidth;
+            currentBounds.west = centerLng - newHalfWidth;
+
+            updateOverlay();
+        }
+
+        function updateOpacity(value) {
+            outageOverlay.setOpacity(value / 100);
+        }
+
+        function updateCoordsDisplay() {
+            document.getElementById('coord-north').textContent = currentBounds.north.toFixed(4);
+            document.getElementById('coord-south').textContent = currentBounds.south.toFixed(4);
+            document.getElementById('coord-east').textContent = currentBounds.east.toFixed(4);
+            document.getElementById('coord-west').textContent = currentBounds.west.toFixed(4);
+        }
+
+        // ============ LANDMARK PINNING ============
+
+        function startPinning() {
+            pinningMode = 'overlay';
+            currentPin = { overlay: null, map: null };
+
+            document.getElementById('pin-status').className = 'pin-mode overlay';
+            document.getElementById('pin-status').textContent = 'Step 1: Click a landmark ON THE OVERLAY';
+            document.getElementById('add-pin-btn').classList.add('active');
+            document.getElementById('map-instructions').textContent = 'Click a recognizable point ON THE OVERLAY (road intersection, building, etc.)';
+            document.getElementById('map-instructions').classList.add('pinning');
+            document.getElementById('map').classList.add('pinning-mode');
+        }
+
+        function handleMapClick(e) {
+            if (!pinningMode) return;
+
+            const latlng = e.latlng;
+
+            if (pinningMode === 'overlay') {
+                // User clicked on overlay - store overlay position
+                currentPin.overlay = [latlng.lat, latlng.lng];
+
+                // Add marker
+                const marker = L.circleMarker(latlng, {
+                    radius: 8,
+                    color: '#3b82f6',
+                    fillColor: '#3b82f6',
+                    fillOpacity: 0.8,
+                    weight: 2
+                }).addTo(map);
+                pinMarkers.push(marker);
+
+                // Switch to map mode
+                pinningMode = 'map';
+                document.getElementById('pin-status').className = 'pin-mode map';
+                document.getElementById('pin-status').textContent = 'Step 2: Click the SAME landmark on the BASE MAP';
+                document.getElementById('map-instructions').textContent = 'Now click the SAME point on the underlying map (where it SHOULD be)';
+            } else if (pinningMode === 'map') {
+                // User clicked on map - store map position
+                currentPin.map = [latlng.lat, latlng.lng];
+
+                // Add marker
+                const marker = L.circleMarker(latlng, {
+                    radius: 8,
+                    color: '#22c55e',
+                    fillColor: '#22c55e',
+                    fillOpacity: 0.8,
+                    weight: 2
+                }).addTo(map);
+                pinMarkers.push(marker);
+
+                // Draw line between pins
+                const line = L.polyline([currentPin.overlay, currentPin.map], {
+                    color: '#f59e0b',
+                    weight: 2,
+                    dashArray: '5, 5'
+                }).addTo(map);
+                pinMarkers.push(line);
+
+                // Save pin
+                pins.push({ ...currentPin });
+                currentPin = null;
+
+                // Update UI
+                updatePinsList();
+
+                // Reset mode
+                pinningMode = null;
+                document.getElementById('pin-status').className = 'pin-mode inactive';
+                document.getElementById('pin-status').textContent = `${pins.length} pin(s) added. Add more or apply.`;
+                document.getElementById('add-pin-btn').classList.remove('active');
+                document.getElementById('map-instructions').textContent = 'Drag the orange center marker to move. Use sidebar controls to scale.';
+                document.getElementById('map-instructions').classList.remove('pinning');
+                document.getElementById('map').classList.remove('pinning-mode');
+
+                // Enable apply button if we have at least 2 pins
+                document.getElementById('apply-pins-btn').disabled = pins.length < 2;
+            }
+        }
+
+        function updatePinsList() {
+            const list = document.getElementById('pins-list');
+            if (pins.length === 0) {
+                list.innerHTML = '<em>No pins yet. Add at least 2 pins to calibrate.</em>';
+                return;
+            }
+
+            let html = '';
+            pins.forEach((pin, i) => {
+                html += `<div class="pin-item">
+                    <span class="label">Pin ${i + 1}</span>
+                    <span>Offset: ${(pin.map[0] - pin.overlay[0]).toFixed(4)}, ${(pin.map[1] - pin.overlay[1]).toFixed(4)}</span>
+                </div>`;
+            });
+            list.innerHTML = html;
+        }
+
+        function clearPins() {
+            pins = [];
+            currentPin = null;
+            pinningMode = null;
+
+            // Remove all pin markers
+            pinMarkers.forEach(m => map.removeLayer(m));
+            pinMarkers = [];
+
+            updatePinsList();
+            document.getElementById('apply-pins-btn').disabled = true;
+            document.getElementById('pin-status').className = 'pin-mode inactive';
+            document.getElementById('pin-status').textContent = 'Click "Add Pin" to start';
+            document.getElementById('add-pin-btn').classList.remove('active');
+            document.getElementById('map-instructions').textContent = 'Drag the orange center marker to move. Use sidebar controls to scale.';
+            document.getElementById('map-instructions').classList.remove('pinning');
+            document.getElementById('map').classList.remove('pinning-mode');
+        }
+
+        function applyPins() {
+            if (pins.length < 2) return;
+
+            // Calculate average translation offset
+            let avgDeltaLat = 0;
+            let avgDeltaLng = 0;
+
+            pins.forEach(pin => {
+                avgDeltaLat += (pin.map[0] - pin.overlay[0]);
+                avgDeltaLng += (pin.map[1] - pin.overlay[1]);
+            });
+
+            avgDeltaLat /= pins.length;
+            avgDeltaLng /= pins.length;
+
+            // Apply translation
+            currentBounds.north += avgDeltaLat;
+            currentBounds.south += avgDeltaLat;
+            currentBounds.east += avgDeltaLng;
+            currentBounds.west += avgDeltaLng;
+
+            // If we have 2+ pins, also calculate scale
+            if (pins.length >= 2) {
+                // Calculate average scale factor based on distances between pins
+                // (This is simplified - a full implementation would use least squares fitting)
+                let scaleFactors = [];
+
+                for (let i = 0; i < pins.length - 1; i++) {
+                    for (let j = i + 1; j < pins.length; j++) {
+                        const overlayDist = Math.sqrt(
+                            Math.pow(pins[i].overlay[0] - pins[j].overlay[0], 2) +
+                            Math.pow(pins[i].overlay[1] - pins[j].overlay[1], 2)
+                        );
+                        const mapDist = Math.sqrt(
+                            Math.pow(pins[i].map[0] - pins[j].map[0], 2) +
+                            Math.pow(pins[i].map[1] - pins[j].map[1], 2)
+                        );
+
+                        if (overlayDist > 0.001) { // Avoid division by zero
+                            scaleFactors.push(mapDist / overlayDist);
+                        }
+                    }
+                }
+
+                if (scaleFactors.length > 0) {
+                    const avgScale = scaleFactors.reduce((a, b) => a + b, 0) / scaleFactors.length;
+
+                    // Only apply scale if it's reasonable (0.5x to 2x)
+                    if (avgScale > 0.5 && avgScale < 2) {
+                        scaleOverlay(avgScale);
+                    }
+                }
+            }
+
+            updateOverlay();
+            clearPins();
+
+            // Show success message
+            document.getElementById('pin-status').className = 'pin-mode inactive';
+            document.getElementById('pin-status').innerHTML = '<span style="color:#22c55e;">Calibration applied!</span>';
+        }
+
+        // ============ ACTIONS ============
+
+        function copyCode() {
+            const code = `const defaultBounds = {
+    south: ${currentBounds.south.toFixed(4)},
+    north: ${currentBounds.north.toFixed(4)},
+    west: ${currentBounds.west.toFixed(4)},
+    east: ${currentBounds.east.toFixed(4)}
+};`;
+
+            navigator.clipboard.writeText(code).then(() => {
+                document.getElementById('code-output').textContent = code + '\n\n// Copied to clipboard!';
+            }).catch(() => {
+                document.getElementById('code-output').textContent = code;
+            });
+        }
+
+        function resetBounds() {
+            currentBounds = {
+                south: 35.97,
+                north: 36.35,
+                west: -86.97,
+                east: -86.50
+            };
+            updateOverlay();
+            clearPins();
+        }
+
+        // Initialize
+        initMap();
+    </script>
+</body>
+</html>

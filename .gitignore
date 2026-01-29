@@ -3,4 +3,9 @@ node_modules/
 .env
 *.log
 .DS_Store
-.env
+
+# Gen-share build output (generated during Netlify build)
+generator-share/
+gen-share/build/
+gen-share/.svelte-kit/
+gen-share/node_modules/
