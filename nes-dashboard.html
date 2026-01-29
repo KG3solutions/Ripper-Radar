@@ -158,8 +158,8 @@
 
         @media (min-width: 600px) {
             .stats-grid {
-                grid-template-columns: repeat(5, 1fr);
-                gap: 12px;
+                grid-template-columns: repeat(6, 1fr);
+                gap: 10px;
             }
         }
 
@@ -571,24 +571,44 @@
                 <div class="stat-card desktop-only" id="stat-linemen" onclick="switchOutageChart('linemen')" style="--stat-color: #06b6d4; --stat-glow: rgba(6, 182, 212, 0.2);">
                     <div class="stat-icon">&#128119;</div>
                     <div class="stat-value" style="color: #06b6d4;">~900</div>
-                    <div class="stat-label">Crews</div>
-                    <div class="stat-sublabel">Deployed</div>
+                    <div class="stat-label">Linemen</div>
+                    <div class="stat-sublabel">Line workers</div>
                     <div class="stat-tap" style="color: #06b6d4;">TAP &rarr;</div>
+                </div>
+                <div class="stat-card desktop-only" id="stat-vegcrews" onclick="switchOutageChart('vegcrews')" style="--stat-color: #10b981; --stat-glow: rgba(16, 185, 129, 0.2);">
+                    <div class="stat-icon">&#127794;</div>
+                    <div class="stat-value" style="color: #10b981;">220</div>
+                    <div class="stat-label">Veg Crews</div>
+                    <div class="stat-sublabel">Tree clearing</div>
+                    <div class="stat-tap" style="color: #10b981;">TAP &rarr;</div>
                 </div>
             </div>
 
-            <!-- Linemen Banner (mobile) -->
+            <!-- Crew Banners (mobile) -->
             <div class="linemen-banner mobile-only" id="linemen-banner" onclick="switchOutageChart('linemen')">
                 <div class="linemen-banner-left">
                     <span class="linemen-banner-icon">&#128119;</span>
                     <div>
                         <div class="linemen-banner-text">Line Workers</div>
-                        <div class="linemen-banner-subtext">From 8+ states</div>
+                        <div class="linemen-banner-subtext">From 7+ states</div>
                     </div>
                 </div>
                 <div style="text-align: right;">
                     <div class="linemen-banner-value">~900</div>
                     <div class="linemen-banner-tap">TAP &rarr;</div>
+                </div>
+            </div>
+            <div class="linemen-banner mobile-only" id="vegcrews-banner" onclick="switchOutageChart('vegcrews')" style="border-color: #334155;">
+                <div class="linemen-banner-left">
+                    <span class="linemen-banner-icon">&#127794;</span>
+                    <div>
+                        <div class="linemen-banner-text">Vegetation Crews</div>
+                        <div class="linemen-banner-subtext">Tree clearing</div>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div class="linemen-banner-value" style="color: #10b981;">220</div>
+                    <div class="linemen-banner-tap" style="color: #10b981;">TAP &rarr;</div>
                 </div>
             </div>
         </div>
@@ -692,6 +712,7 @@
             <div id="chart-restored" class="chart hidden"></div>
             <div id="chart-poles" class="chart hidden"></div>
             <div id="chart-linemen" class="chart hidden"></div>
+            <div id="chart-vegcrews" class="chart hidden"></div>
             <div id="chart-overview" class="chart performance hidden"></div>
             <div id="chart-linemenRelative" class="chart performance hidden"></div>
             <div id="chart-linemenOutage" class="chart performance hidden"></div>
@@ -788,14 +809,24 @@
             values: [160, 240, 300, 500, 700, 740, 900, 900, 900]
         };
 
-        // Vegetation crews: 220 as of Jan 29
+        const vegCrewData = {
+            timestamps: [
+                '2026-01-25 12:00', '2026-01-25 19:00',
+                '2026-01-26 07:00', '2026-01-26 18:00',
+                '2026-01-27 07:00', '2026-01-27 14:00',
+                '2026-01-28 06:00', '2026-01-28 12:00',
+                '2026-01-29 10:00'
+            ],
+            values: [30, 50, 80, 120, 150, 180, 200, 215, 220]
+        };
 
         // ============ CONTEXT MESSAGES ============
         const contextMessages = {
             main: '<strong style="color: #ef4444;">&#128202;</strong> Largest outage in NES history &mdash; 230K peak, surpassing the 2020 derecho by 30K. Most significant ice event since 1994.',
             restored: '<strong style="color: #22c55e;">&#10003;</strong> Crews restored 130K+ customers since peak, working 14-16 hour shifts in continuous rotation. 57% progress.',
             poles: '<strong style="color: #8b5cf6;">&#128268;</strong> 350+ broken poles reported. Ice accumulation caused trees to snap and bring down power lines across the service area.',
-            linemen: '<strong style="color: #06b6d4;">&#128119;</strong> NES ramped from 160 to 900+ workers (430% increase). 220 vegetation crews deployed from 7+ states.',
+            linemen: '<strong style="color: #06b6d4;">&#128119;</strong> NES ramped from 160 to 900+ line workers (430% increase). Working 14-16 hour shifts from 7+ states.',
+            vegcrews: '<strong style="color: #10b981;">&#127794;</strong> 220 vegetation crews clearing downed trees and debris blocking access to power lines. Critical for enabling linemen to reach damaged infrastructure.',
             overview: '<strong style="color: #60a5fa;">&#128202;</strong> NES had 10x the outages of MTE but started with fewer crews. 48.9% of NES customers lost power vs 6.4% of MTE.',
             linemenRelative: '<strong style="color: #60a5fa;">&#127919; THE KEY METRIC:</strong> MTE had <strong>32x more linemen per 1,000 outages</strong> than NES on Monday. This shows actual staffing relative to the problem &mdash; not infrastructure size. NES was critically understaffed for their crisis.',
             linemenOutage: '<strong style="color: #60a5fa;">&#128119;</strong> Same metric tracked over time. MTE consistently had 10-100x more linemen per thousand outages throughout the event.',
@@ -834,7 +865,7 @@
         }
 
         function hideAllCharts() {
-            const charts = ['main', 'restored', 'poles', 'linemen', 'overview', 'linemenRelative', 'linemenOutage', 'lineMiles', 'restorationRate', 'timeline'];
+            const charts = ['main', 'restored', 'poles', 'linemen', 'vegcrews', 'overview', 'linemenRelative', 'linemenOutage', 'lineMiles', 'restorationRate', 'timeline'];
             charts.forEach(id => {
                 document.getElementById('chart-' + id).className = document.getElementById('chart-' + id).className.includes('performance') ? 'chart performance hidden' : 'chart hidden';
             });
@@ -858,26 +889,31 @@
                 case 'restored': renderRestoredChart(); break;
                 case 'poles': renderPolesChart(); break;
                 case 'linemen': renderLinemenChart(); break;
+                case 'vegcrews': renderVegCrewsChart(); break;
             }
         }
 
         function updateStatCards(activeChart) {
-            const cards = ['main', 'current', 'restored', 'poles', 'linemen'];
+            const cards = ['main', 'current', 'restored', 'poles', 'linemen', 'vegcrews'];
             cards.forEach(id => {
                 const el = document.getElementById('stat-' + id);
                 if (el) {
                     const isActive = (id === activeChart) || (id === 'main' && activeChart === 'main') || (id === 'current' && activeChart === 'main');
                     el.className = isActive ? 'stat-card active' : 'stat-card';
-                    if (id === 'linemen' && !isMobile()) {
+                    if ((id === 'linemen' || id === 'vegcrews') && !isMobile()) {
                         el.className += ' desktop-only';
                     }
                 }
             });
 
-            // Update linemen banner
-            const banner = document.getElementById('linemen-banner');
-            if (banner) {
-                banner.className = activeChart === 'linemen' ? 'linemen-banner mobile-only active' : 'linemen-banner mobile-only';
+            // Update mobile banners
+            const linemenBanner = document.getElementById('linemen-banner');
+            if (linemenBanner) {
+                linemenBanner.className = activeChart === 'linemen' ? 'linemen-banner mobile-only active' : 'linemen-banner mobile-only';
+            }
+            const vegcrewsBanner = document.getElementById('vegcrews-banner');
+            if (vegcrewsBanner) {
+                vegcrewsBanner.className = activeChart === 'vegcrews' ? 'linemen-banner mobile-only active' : 'linemen-banner mobile-only';
             }
         }
 
@@ -1060,6 +1096,48 @@
             };
 
             Plotly.newPlot('chart-linemen', [trace], layout, { responsive: true, displayModeBar: !mobile, scrollZoom: true });
+        }
+
+        function renderVegCrewsChart() {
+            const mobile = isMobile();
+            const trace = {
+                x: vegCrewData.timestamps,
+                y: vegCrewData.values,
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#10b981', width: 3, shape: 'spline' },
+                marker: { color: '#10b981', size: mobile ? 8 : 12, symbol: 'circle', line: { color: '#059669', width: 2 } },
+                fill: 'tozeroy',
+                fillcolor: 'rgba(16, 185, 129, 0.2)',
+                hovertemplate: '<b>%{x}</b><br>%{y} crews<extra></extra>'
+            };
+
+            const layout = {
+                ...baseLayout,
+                title: {
+                    text: '<b>Vegetation Crews Deployed</b><br><span style="font-size:12px;color:#94a3b8">Tree clearing & debris removal</span>',
+                    font: { family: 'Inter, system-ui', size: mobile ? 16 : 20, color: '#10b981' }
+                },
+                xaxis: { gridcolor: '#334155', tickfont: { size: mobile ? 9 : 11 }, tickangle: -45, rangeslider: { visible: true, thickness: 0.08 } },
+                yaxis: { gridcolor: '#334155', tickfont: { size: mobile ? 9 : 11 }, range: [0, 260] },
+                annotations: [{
+                    x: '2026-01-29 10:00',
+                    y: 220,
+                    text: '<b>220 crews</b>',
+                    showarrow: true,
+                    arrowhead: 2,
+                    arrowcolor: '#10b981',
+                    ax: -40,
+                    ay: -30,
+                    font: { size: 11, color: '#10b981' },
+                    bgcolor: '#1e293b',
+                    bordercolor: '#10b981',
+                    borderwidth: 1
+                }],
+                margin: mobile ? { t: 70, b: 70, l: 45, r: 15 } : { t: 80, b: 80, l: 60, r: 30 }
+            };
+
+            Plotly.newPlot('chart-vegcrews', [trace], layout, { responsive: true, displayModeBar: !mobile, scrollZoom: true });
         }
 
         function renderOverviewChart() {
