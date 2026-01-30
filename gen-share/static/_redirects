@@ -1,3 +1,0 @@
-# SPA fallback for client-side routing
-# Static files are served first, this only catches client-side routes
-/*    /index.html   200
