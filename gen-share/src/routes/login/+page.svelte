@@ -1,13 +1,16 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { signInWithPhone, verifyOtp } from '$lib/stores/auth';
+	import { signInWithPhone, signInWithEmail, verifyOtp, verifyEmailOtp } from '$lib/stores/auth';
 	import { Button, Input, PageHeader } from '$lib/components';
 
-	type Step = 'phone' | 'code';
+	type Step = 'input' | 'code';
+	type Method = 'email' | 'phone';
 
-	let step = $state<Step>('phone');
+	let step = $state<Step>('input');
+	let method = $state<Method>('email');
 	let phone = $state('');
+	let email = $state('');
 	let code = $state('');
 	let loading = $state(false);
 	let error = $state('');
@@ -31,12 +34,20 @@
 		return p;
 	}
 
+	function isValidEmail(e: string): boolean {
+		return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+	}
+
 	async function handleSendCode() {
 		error = '';
 		loading = true;
 
 		try {
-			await signInWithPhone(formatPhoneForApi(phone));
+			if (method === 'email') {
+				await signInWithEmail(email);
+			} else {
+				await signInWithPhone(formatPhoneForApi(phone));
+			}
 			step = 'code';
 			startResendTimer();
 		} catch (err: any) {
@@ -56,7 +67,11 @@
 		loading = true;
 
 		try {
-			await verifyOtp(formatPhoneForApi(phone), code);
+			if (method === 'email') {
+				await verifyEmailOtp(email, code);
+			} else {
+				await verifyOtp(formatPhoneForApi(phone), code);
+			}
 
 			const redirectTo = $page.url.searchParams.get('redirectTo') || '/';
 			goto(redirectTo);
@@ -90,10 +105,25 @@
 	}
 
 	function handleBack() {
-		step = 'phone';
+		step = 'input';
 		code = '';
 		error = '';
 	}
+
+	function switchMethod(newMethod: Method) {
+		method = newMethod;
+		error = '';
+	}
+
+	let canSubmit = $derived(
+		method === 'email'
+			? isValidEmail(email)
+			: phone.replace(/\D/g, '').length >= 10
+	);
+
+	let displayValue = $derived(
+		method === 'email' ? email : formattedPhone
+	);
 </script>
 
 <svelte:head>
@@ -104,30 +134,65 @@
 	{#if step === 'code'}
 		<PageHeader title="Enter code" backHref="#" backLabel="Back" />
 	{:else}
-		<PageHeader title="Verify your phone" />
+		<PageHeader title="Sign in" />
 	{/if}
 
 	<div class="px-4 py-8 max-w-form mx-auto">
-		{#if step === 'phone'}
+		{#if step === 'input'}
 			<p class="text-base text-gray-600 mb-6">
-				Enter your phone number to continue. We'll send a code to verify it's you.
+				{#if method === 'email'}
+					Enter your email to continue. We'll send a code to verify it's you.
+				{:else}
+					Enter your phone number to continue. We'll send a code to verify it's you.
+				{/if}
 			</p>
+
+			<!-- Method Toggle -->
+			<div class="flex mb-6 bg-gray-100 rounded-lg p-1">
+				<button
+					type="button"
+					class="flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors {method === 'email' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}"
+					onclick={() => switchMethod('email')}
+				>
+					Email
+				</button>
+				<button
+					type="button"
+					class="flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors {method === 'phone' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}"
+					onclick={() => switchMethod('phone')}
+				>
+					Phone
+				</button>
+			</div>
 
 			<form onsubmit={(e) => { e.preventDefault(); handleSendCode(); }}>
 				<div class="mb-6">
-					<Input
-						label="Phone number"
-						name="phone"
-						type="tel"
-						placeholder="(615) 555-0123"
-						bind:value={phone}
-						required
-						error={error}
-						autocomplete="tel"
-					/>
+					{#if method === 'email'}
+						<Input
+							label="Email address"
+							name="email"
+							type="email"
+							placeholder="you@example.com"
+							bind:value={email}
+							required
+							error={error}
+							autocomplete="email"
+						/>
+					{:else}
+						<Input
+							label="Phone number"
+							name="phone"
+							type="tel"
+							placeholder="(615) 555-0123"
+							bind:value={phone}
+							required
+							error={error}
+							autocomplete="tel"
+						/>
+					{/if}
 				</div>
 
-				<Button type="submit" disabled={loading || phone.replace(/\D/g, '').length < 10}>
+				<Button type="submit" disabled={loading || !canSubmit}>
 					{loading ? 'Sending...' : 'Send code'}
 				</Button>
 			</form>
@@ -143,7 +208,7 @@
 
 		{:else}
 			<p class="text-base text-gray-600 mb-6">
-				We sent a code to {formattedPhone}
+				We sent a code to {displayValue}
 			</p>
 
 			<form onsubmit={(e) => { e.preventDefault(); handleVerifyCode(); }}>
@@ -200,7 +265,7 @@
 					class="text-sm text-gray-500 hover:text-gray-700"
 					onclick={handleBack}
 				>
-					Use a different number
+					Use a different {method === 'email' ? 'email' : 'number'}
 				</button>
 			</div>
 		{/if}

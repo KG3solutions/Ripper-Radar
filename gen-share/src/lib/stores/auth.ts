@@ -71,12 +71,33 @@ export async function signInWithPhone(phone: string) {
 	if (error) throw error;
 }
 
-// Verify OTP code
+// Sign in with OTP (email)
+export async function signInWithEmail(email: string) {
+	const { error } = await supabase.auth.signInWithOtp({
+		email
+	});
+
+	if (error) throw error;
+}
+
+// Verify OTP code (phone)
 export async function verifyOtp(phone: string, token: string) {
 	const { data, error } = await supabase.auth.verifyOtp({
 		phone,
 		token,
 		type: 'sms'
+	});
+
+	if (error) throw error;
+	return data;
+}
+
+// Verify OTP code (email)
+export async function verifyEmailOtp(email: string, token: string) {
+	const { data, error } = await supabase.auth.verifyOtp({
+		email,
+		token,
+		type: 'email'
 	});
 
 	if (error) throw error;
