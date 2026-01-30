@@ -30,10 +30,10 @@
 	}
 
 	// Check if current route should show header (accounting for base path)
-	let showHeader = $derived(() => {
+	let showHeader = $derived.by(() => {
 		const path = $page.url.pathname;
-		const isLogin = path === `${base}/login` || path === '/login';
-		const isHome = path === base || path === `${base}/` || path === '/';
+		const isLogin = path === `${base}/login` || path === '/login' || path.endsWith('/login');
+		const isHome = path === base || path === `${base}/` || path === '/' || path === '/generator-share' || path === '/generator-share/';
 		return !isLogin && !isHome;
 	});
 </script>
@@ -51,7 +51,7 @@
 	</div>
 {/if}
 
-{#if showHeader()}
+{#if showHeader}
 	<header class="bg-white border-b border-gray-200 sticky top-0 z-20">
 		<div class="max-w-content mx-auto px-4">
 			<div class="flex items-center justify-between h-14">
