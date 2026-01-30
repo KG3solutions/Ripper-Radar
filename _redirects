@@ -1,3 +1,0 @@
-# Generator Share SPA fallback
-# Static files are served first automatically, this catches client-side routes
-/generator-share/*  /generator-share/index.html  200
