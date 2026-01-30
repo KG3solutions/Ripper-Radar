@@ -18,9 +18,4 @@
     Access-Control-Allow-Methods = "GET, OPTIONS"
     Access-Control-Allow-Headers = "Content-Type"
 
-# SPA fallback for Generator Share app (only when no file exists)
-[[redirects]]
-  from = "/generator-share/*"
-  to = "/generator-share/index.html"
-  status = 200
-  force = false
+# No redirects here - using _redirects file in generator-share folder
