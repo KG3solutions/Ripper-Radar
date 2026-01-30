@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 	import { Zap, Map, List } from 'lucide-svelte';
 	import {
 		fetchListings,
@@ -54,9 +55,9 @@
 
 	function handleMessage(listing: Listing) {
 		if ($isAuthenticated) {
-			goto(`/listing/${listing.id}`);
+			goto(`${base}/listing/${listing.id}`);
 		} else {
-			goto(`/login?redirectTo=/listing/${listing.id}`);
+			goto(`${base}/login?redirectTo=${base}/listing/${listing.id}`);
 		}
 	}
 
@@ -118,7 +119,7 @@
 
 		<!-- View Requests link -->
 		<div class="mb-4">
-			<a href="/browse/requests" class="text-sm text-blue-600 hover:underline">
+			<a href="{base}/browse/requests" class="text-sm text-blue-600 hover:underline">
 				Looking to lend? View requests instead &rarr;
 			</a>
 		</div>
@@ -155,7 +156,7 @@
 					description="Be the first to offer a generator in your area."
 				>
 					{#snippet action()}
-						<Button href="/create/offer" fullWidth={false}>
+						<Button href="{base}/create/offer" fullWidth={false}>
 							Post an offer
 						</Button>
 					{/snippet}

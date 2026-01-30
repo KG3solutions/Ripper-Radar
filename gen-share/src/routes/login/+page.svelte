@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 	import { page } from '$app/stores';
 	import { signInWithPhone, signInWithEmail, verifyOtp, verifyEmailOtp } from '$lib/stores/auth';
 	import { Button, Input, PageHeader } from '$lib/components';
@@ -73,7 +74,7 @@
 				await verifyOtp(formatPhoneForApi(phone), code);
 			}
 
-			const redirectTo = $page.url.searchParams.get('redirectTo') || '/';
+			const redirectTo = $page.url.searchParams.get('redirectTo') || base || '/';
 			goto(redirectTo);
 		} catch (err: any) {
 			console.error('Error verifying code:', err);
@@ -200,9 +201,9 @@
 			<div class="mt-8 pt-6 border-t border-gray-200">
 				<p class="text-sm text-gray-500 text-center">
 					By continuing, you agree to our
-					<a href="/terms" class="text-blue-600 hover:underline">Terms of Use</a>
+					<a href="{base}/terms" class="text-blue-600 hover:underline">Terms of Use</a>
 					and
-					<a href="/privacy" class="text-blue-600 hover:underline">Privacy Policy</a>.
+					<a href="{base}/privacy" class="text-blue-600 hover:underline">Privacy Policy</a>.
 				</p>
 			</div>
 

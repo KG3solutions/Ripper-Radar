@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 	import { createListing } from '$lib/stores/listings';
-	import { profile, isPhoneVerified } from '$lib/stores/auth';
+	import { profile, isVerified } from '$lib/stores/auth';
 	import {
 		PageHeader,
 		SafetyBanner,
@@ -68,7 +69,7 @@
 				is_urgent: false
 			});
 
-			goto(`/listing/${listing.id}?created=true`);
+			goto(`${base}/listing/${listing.id}?created=true`);
 		} catch (err: any) {
 			console.error('Error creating listing:', err);
 			submitError = err.message || 'Failed to create listing. Please try again.';
@@ -83,13 +84,13 @@
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50">
-	<PageHeader title="Offer generator" backHref="/" backLabel="Cancel" />
+	<PageHeader title="Offer generator" backHref={base || '/'} backLabel="Cancel" />
 	<SafetyBanner />
 
 	<div class="px-4 py-6 max-w-form mx-auto">
-		{#if !$isPhoneVerified}
+		{#if !$isVerified}
 			<InfoBanner>
-				You need to verify your phone number before posting. <a href="/login" class="underline">Verify now</a>
+				You need to verify your account before posting. <a href="{base}/login" class="underline">Verify now</a>
 			</InfoBanner>
 			<div class="mt-6"></div>
 		{/if}
@@ -180,7 +181,7 @@
 			{/if}
 
 			<div class="mt-6">
-				<Button type="submit" disabled={loading || !$isPhoneVerified}>
+				<Button type="submit" disabled={loading || !$isVerified}>
 					{loading ? 'Posting...' : 'Post offer'}
 				</Button>
 			</div>

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 	import { page } from '$app/stores';
 	import { getListing } from '$lib/stores/listings';
 	import { startConversation } from '$lib/stores/conversations';
@@ -44,7 +45,7 @@
 		if (!listing) return;
 
 		if (!$isAuthenticated) {
-			goto(`/login?redirectTo=/listing/${listing.id}`);
+			goto(`${base}/login?redirectTo=${base}/listing/${listing.id}`);
 			return;
 		}
 
@@ -58,7 +59,7 @@
 			);
 
 			if (conversation) {
-				goto(`/conversation/${conversation.id}`);
+				goto(`${base}/conversation/${conversation.id}`);
 			}
 		} catch (err) {
 			console.error('Error starting conversation:', err);
@@ -68,7 +69,7 @@
 	}
 
 	function handleReport() {
-		goto(`/report?listing=${listing?.id}`);
+		goto(`${base}/report?listing=${listing?.id}`);
 	}
 </script>
 
@@ -77,7 +78,7 @@
 </svelte:head>
 
 <div class="min-h-screen bg-gray-50">
-	<PageHeader title="Listing details" backHref="/browse/offers" />
+	<PageHeader title="Listing details" backHref="{base}/browse/offers" />
 	<SafetyBanner />
 
 	<div class="px-4 py-6 max-w-content mx-auto">
@@ -88,7 +89,7 @@
 		{:else if error}
 			<div class="py-12 text-center">
 				<p class="text-red-600 mb-4">{error}</p>
-				<Button variant="secondary" href="/browse/offers" fullWidth={false}>
+				<Button variant="secondary" href="{base}/browse/offers" fullWidth={false}>
 					Browse listings
 				</Button>
 			</div>
@@ -191,7 +192,7 @@
 			<div class="space-y-3">
 				{#if isOwnListing}
 					<InfoBanner>This is your listing.</InfoBanner>
-					<Button variant="secondary" href="/profile">
+					<Button variant="secondary" href="{base}/profile">
 						Edit listing
 					</Button>
 				{:else}

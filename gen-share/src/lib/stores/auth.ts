@@ -12,6 +12,13 @@ export const loading = writable(true);
 // Derived states
 export const isAuthenticated = derived(user, ($user) => !!$user);
 export const isPhoneVerified = derived(profile, ($profile) => $profile?.phone_verified ?? false);
+// Email is verified if user has email_confirmed_at set
+export const isEmailVerified = derived(user, ($user) => !!$user?.email_confirmed_at);
+// User is verified if either phone OR email is verified
+export const isVerified = derived(
+	[isPhoneVerified, isEmailVerified],
+	([$phone, $email]) => $phone || $email
+);
 
 // Initialize auth state
 export async function initAuth() {

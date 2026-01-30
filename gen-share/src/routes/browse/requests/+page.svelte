@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 	import { HelpingHand, Map, List } from 'lucide-svelte';
 	import {
 		fetchListings,
@@ -53,9 +54,9 @@
 
 	function handleMessage(listing: Listing) {
 		if ($isAuthenticated) {
-			goto(`/listing/${listing.id}`);
+			goto(`${base}/listing/${listing.id}`);
 		} else {
-			goto(`/login?redirectTo=/listing/${listing.id}`);
+			goto(`${base}/login?redirectTo=${base}/listing/${listing.id}`);
 		}
 	}
 
@@ -116,7 +117,7 @@
 
 		<!-- View Offers link -->
 		<div class="mb-4">
-			<a href="/browse/offers" class="text-sm text-blue-600 hover:underline">
+			<a href="{base}/browse/offers" class="text-sm text-blue-600 hover:underline">
 				Looking to borrow? View offers instead &rarr;
 			</a>
 		</div>
