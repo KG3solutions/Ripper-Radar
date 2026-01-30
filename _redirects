@@ -1,4 +1,3 @@
-# Generator Share SPA - exclude static assets and data files
-/generator-share/_app/*  /generator-share/_app/:splat  200
-/generator-share/__data.json  /generator-share/__data.json  404
+# SPA fallback for Generator Share
+# Netlify serves existing files first, then applies this fallback
 /generator-share/*  /generator-share/index.html  200
