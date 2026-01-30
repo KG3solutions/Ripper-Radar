@@ -8,22 +8,14 @@
 		<meta name="description" content="Connect neighbors with generators during power outages. No payments. Use at your own risk." />
 		%sveltekit.head%
 		<script>
-			// Intercept fetch to log requests
-			const originalFetch = window.fetch;
-			window.fetch = function(...args) {
-				console.log('Fetch:', args[0]);
-				return originalFetch.apply(this, args).catch(err => {
-					console.error('Fetch failed:', args[0], err);
-					throw err;
-				});
-			};
-			window.onerror = function(msg, url, line, col, error) {
-				document.body.innerHTML = '<div style="padding:20px;font-family:monospace;background:#fee;color:#c00;"><h2>JavaScript Error</h2><pre>' + msg + '\n\nFile: ' + url + '\nLine: ' + line + '</pre></div>';
-				return false;
-			};
-			window.onunhandledrejection = function(event) {
-				var stack = event.reason?.stack || '';
-				document.body.innerHTML = '<div style="padding:20px;font-family:monospace;background:#fee;color:#c00;"><h2>Promise Error</h2><pre>' + (event.reason?.message || event.reason || 'Unknown error') + '\n\nStack:\n' + stack + '</pre></div>';
+			// Patch JSON.parse to handle HTML gracefully (for SvelteKit SPA fallback)
+			const originalJSONParse = JSON.parse;
+			JSON.parse = function(text, reviver) {
+				if (typeof text === 'string' && text.trim().startsWith('<')) {
+					console.warn('JSON.parse received HTML, returning empty object');
+					return {};
+				}
+				return originalJSONParse.call(this, text, reviver);
 			};
 		</script>
 	</head>

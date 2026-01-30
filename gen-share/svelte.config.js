@@ -13,6 +13,9 @@ const config = {
 		}),
 		paths: {
 			base: '/generator-share'
+		},
+		prerender: {
+			handleUnseenRoutes: 'ignore'
 		}
 	}
 };
