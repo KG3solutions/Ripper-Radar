@@ -1,6 +1,7 @@
 # Generator Share SPA fallback
-# Return 404 for data requests - SvelteKit will handle client-side
-/generator-share/*__data.json*  /404.html  404
+# Return 404 for data requests - SvelteKit handles these client-side
+/generator-share/__data.json  /generator-share/index.html  404
+/generator-share/*/__data.json  /generator-share/index.html  404
 
 # SPA fallback for all other routes
 /generator-share/*  /generator-share/index.html  200
