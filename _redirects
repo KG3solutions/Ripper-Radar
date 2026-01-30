@@ -1,3 +1,0 @@
-# Generator Share SPA fallback
-# Note: 200 rewrites only apply when the file doesn't exist
-/generator-share/*  /generator-share/index.html  200
