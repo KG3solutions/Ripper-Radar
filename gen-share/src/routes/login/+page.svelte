@@ -28,10 +28,15 @@
 			startResendTimer();
 		} catch (err: any) {
 			console.error('Error sending code:', err);
-			if (err.message?.includes('rate')) {
+			// Show actual error for debugging
+			const errMsg = err.message || err.error_description || JSON.stringify(err);
+			if (errMsg?.includes('rate') || errMsg?.includes('limit')) {
 				error = 'Too many attempts. Wait 15 minutes.';
+			} else if (errMsg?.includes('not authorized') || errMsg?.includes('not enabled')) {
+				error = 'Email auth not configured. Contact support.';
 			} else {
-				error = 'Failed to send code. Please try again.';
+				// Show actual error for debugging
+				error = `Error: ${errMsg}`;
 			}
 		} finally {
 			loading = false;
