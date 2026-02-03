@@ -12,26 +12,53 @@ export const loading = writable(true);
 // Derived states
 export const isAuthenticated = derived(user, ($user) => !!$user);
 export const isPhoneVerified = derived(profile, ($profile) => $profile?.phone_verified ?? false);
-// Email is verified if user has email_confirmed_at set
-export const isEmailVerified = derived(user, ($user) => !!$user?.email_confirmed_at);
+// Email is verified if:
+// 1. User has email_confirmed_at set (traditional email confirmation), OR
+// 2. User is logged in and has an email (meaning they verified via email OTP)
+export const isEmailVerified = derived(user, ($user) => {
+	if (!$user) return false;
+	// If email_confirmed_at is set, they're verified
+	if ($user.email_confirmed_at) return true;
+	// If they're logged in with an email, they verified via OTP
+	if ($user.email) return true;
+	return false;
+});
 // User is verified if either phone OR email is verified
 export const isVerified = derived(
 	[isPhoneVerified, isEmailVerified],
 	([$phone, $email]) => $phone || $email
 );
 
+// Helper to check if error is an abort error (happens during navigation)
+function isAbortError(error: unknown): boolean {
+	if (error instanceof Error) {
+		return error.message.includes('abort') ||
+			error.name === 'AbortError' ||
+			error.message.includes('signal');
+	}
+	return false;
+}
+
 // Initialize auth state
 export async function initAuth() {
 	loading.set(true);
 
-	const {
-		data: { session: currentSession }
-	} = await supabase.auth.getSession();
+	try {
+		const {
+			data: { session: currentSession }
+		} = await supabase.auth.getSession();
 
-	if (currentSession) {
-		session.set(currentSession);
-		user.set(currentSession.user);
-		await loadProfile(currentSession.user.id);
+		if (currentSession) {
+			session.set(currentSession);
+			user.set(currentSession.user);
+			await loadProfile(currentSession.user.id);
+		}
+	} catch (error) {
+		// Ignore abort errors - they happen during navigation and are expected
+		if (!isAbortError(error)) {
+			console.error('Error getting session:', error);
+			throw error;
+		}
 	}
 
 	loading.set(false);
@@ -42,7 +69,14 @@ export async function initAuth() {
 		user.set(newSession?.user ?? null);
 
 		if (newSession?.user) {
-			await loadProfile(newSession.user.id);
+			try {
+				await loadProfile(newSession.user.id);
+			} catch (error) {
+				// Ignore abort errors during auth state changes
+				if (!isAbortError(error)) {
+					console.error('Error loading profile on auth change:', error);
+				}
+			}
 		} else {
 			profile.set(null);
 		}
