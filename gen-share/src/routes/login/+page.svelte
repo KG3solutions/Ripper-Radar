@@ -2,38 +2,17 @@
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
 	import { page } from '$app/stores';
-	import { signInWithPhone, signInWithEmail, verifyOtp, verifyEmailOtp } from '$lib/stores/auth';
+	import { signInWithEmail, verifyEmailOtp } from '$lib/stores/auth';
 	import { Button, Input, PageHeader } from '$lib/components';
 
 	type Step = 'input' | 'code';
-	type Method = 'email' | 'phone';
 
 	let step = $state<Step>('input');
-	let method = $state<Method>('email');
-	let phone = $state('');
 	let email = $state('');
 	let code = $state('');
 	let loading = $state(false);
 	let error = $state('');
 	let resendTimer = $state(0);
-
-	let formattedPhone = $derived(formatPhoneForDisplay(phone));
-
-	function formatPhoneForDisplay(p: string): string {
-		const cleaned = p.replace(/\D/g, '');
-		if (cleaned.length === 10) {
-			return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
-		}
-		return p;
-	}
-
-	function formatPhoneForApi(p: string): string {
-		const cleaned = p.replace(/\D/g, '');
-		if (cleaned.length === 10) {
-			return `+1${cleaned}`;
-		}
-		return p;
-	}
 
 	function isValidEmail(e: string): boolean {
 		return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
@@ -44,11 +23,7 @@
 		loading = true;
 
 		try {
-			if (method === 'email') {
-				await signInWithEmail(email);
-			} else {
-				await signInWithPhone(formatPhoneForApi(phone));
-			}
+			await signInWithEmail(email);
 			step = 'code';
 			startResendTimer();
 		} catch (err: any) {
@@ -68,16 +43,23 @@
 		loading = true;
 
 		try {
-			if (method === 'email') {
-				await verifyEmailOtp(email, code);
-			} else {
-				await verifyOtp(formatPhoneForApi(phone), code);
-			}
+			await verifyEmailOtp(email, code);
+
+			// Small delay to let auth state settle before navigation
+			// This prevents "signal aborted" errors from in-flight requests
+			await new Promise(resolve => setTimeout(resolve, 100));
 
 			const redirectTo = $page.url.searchParams.get('redirectTo') || base || '/';
 			goto(redirectTo);
 		} catch (err: any) {
 			console.error('Error verifying code:', err);
+			// Ignore abort errors - they can happen during auth state changes
+			if (err.message?.includes('abort') || err.message?.includes('signal')) {
+				// Auth succeeded but request was aborted, try to navigate anyway
+				const redirectTo = $page.url.searchParams.get('redirectTo') || base || '/';
+				goto(redirectTo);
+				return;
+			}
 			if (err.message?.includes('expired')) {
 				error = 'Code expired. Request a new one.';
 			} else if (err.message?.includes('Invalid')) {
@@ -111,20 +93,7 @@
 		error = '';
 	}
 
-	function switchMethod(newMethod: Method) {
-		method = newMethod;
-		error = '';
-	}
-
-	let canSubmit = $derived(
-		method === 'email'
-			? isValidEmail(email)
-			: phone.replace(/\D/g, '').length >= 10
-	);
-
-	let displayValue = $derived(
-		method === 'email' ? email : formattedPhone
-	);
+	let canSubmit = $derived(isValidEmail(email));
 </script>
 
 <svelte:head>
@@ -141,56 +110,21 @@
 	<div class="px-4 py-8 max-w-form mx-auto">
 		{#if step === 'input'}
 			<p class="text-base text-gray-600 mb-6">
-				{#if method === 'email'}
-					Enter your email to continue. We'll send a code to verify it's you.
-				{:else}
-					Enter your phone number to continue. We'll send a code to verify it's you.
-				{/if}
+				Enter your email to continue. We'll send a code to verify it's you.
 			</p>
-
-			<!-- Method Toggle -->
-			<div class="flex mb-6 bg-gray-100 rounded-lg p-1">
-				<button
-					type="button"
-					class="flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors {method === 'email' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}"
-					onclick={() => switchMethod('email')}
-				>
-					Email
-				</button>
-				<button
-					type="button"
-					class="flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors {method === 'phone' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}"
-					onclick={() => switchMethod('phone')}
-				>
-					Phone
-				</button>
-			</div>
 
 			<form onsubmit={(e) => { e.preventDefault(); handleSendCode(); }}>
 				<div class="mb-6">
-					{#if method === 'email'}
-						<Input
-							label="Email address"
-							name="email"
-							type="email"
-							placeholder="you@example.com"
-							bind:value={email}
-							required
-							error={error}
-							autocomplete="email"
-						/>
-					{:else}
-						<Input
-							label="Phone number"
-							name="phone"
-							type="tel"
-							placeholder="(615) 555-0123"
-							bind:value={phone}
-							required
-							error={error}
-							autocomplete="tel"
-						/>
-					{/if}
+					<Input
+						label="Email address"
+						name="email"
+						type="email"
+						placeholder="you@example.com"
+						bind:value={email}
+						required
+						error={error}
+						autocomplete="email"
+					/>
 				</div>
 
 				<Button type="submit" disabled={loading || !canSubmit}>
@@ -209,7 +143,7 @@
 
 		{:else}
 			<p class="text-base text-gray-600 mb-6">
-				We sent a code to {displayValue}
+				We sent a code to {email}
 			</p>
 
 			<form onsubmit={(e) => { e.preventDefault(); handleVerifyCode(); }}>
@@ -266,7 +200,7 @@
 					class="text-sm text-gray-500 hover:text-gray-700"
 					onclick={handleBack}
 				>
-					Use a different {method === 'email' ? 'email' : 'number'}
+					Use a different email
 				</button>
 			</div>
 		{/if}

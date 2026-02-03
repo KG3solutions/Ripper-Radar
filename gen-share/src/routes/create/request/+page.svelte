@@ -2,7 +2,20 @@
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
 	import { createListing } from '$lib/stores/listings';
-	import { profile, isVerified } from '$lib/stores/auth';
+	import { profile, isVerified, user, isEmailVerified, isPhoneVerified } from '$lib/stores/auth';
+
+	// Debug: log auth state
+	$effect(() => {
+		console.log('Auth Debug:', {
+			user: $user,
+			userEmail: $user?.email,
+			emailConfirmedAt: $user?.email_confirmed_at,
+			isEmailVerified: $isEmailVerified,
+			isPhoneVerified: $isPhoneVerified,
+			isVerified: $isVerified,
+			profile: $profile
+		});
+	});
 	import {
 		PageHeader,
 		SafetyBanner,
@@ -85,6 +98,16 @@
 	<SafetyBanner />
 
 	<div class="px-4 py-6 max-w-form mx-auto">
+		<!-- Debug Info (remove in production) -->
+		<div class="mb-4 p-3 bg-gray-100 rounded text-xs font-mono">
+			<div>user: {$user ? 'exists' : 'null'}</div>
+			<div>email: {$user?.email || 'none'}</div>
+			<div>email_confirmed_at: {$user?.email_confirmed_at || 'null'}</div>
+			<div>isEmailVerified: {$isEmailVerified}</div>
+			<div>isPhoneVerified: {$isPhoneVerified}</div>
+			<div>isVerified: {$isVerified}</div>
+		</div>
+
 		{#if !$isVerified}
 			<InfoBanner>
 				You need to verify your account before posting. <a href="{base}/login" class="underline">Verify now</a>
