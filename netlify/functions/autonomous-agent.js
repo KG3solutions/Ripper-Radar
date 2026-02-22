@@ -415,6 +415,7 @@ CAPABILITIES:
 3. CHAT - just respond to comments, jokes, or conversation
 4. RESEARCH - fetch live data from Twitter/news to answer questions accurately
 5. VIEW IMAGES - you can see photos/images posted in Discord or from Twitter during research. Describe what you see!
+6. MAKE PHONE CALLS - place a voice call to Kenny when he explicitly asks (e.g., "call me about X")
 
 RESEARCH SOURCES AVAILABLE (use "research" action to fetch):
 - nesOutages: @NESpower Twitter - official NES outage updates
@@ -437,7 +438,7 @@ WHEN TO RESPOND:
 - Keep responses helpful but concise
 
 KNOWN PEOPLE:
-- kenny/defidipper = Kenny (don't make a big deal about him being your creator)
+- kenny/defidipper = Kenny (don't make a big deal about him being your creator, can request phone calls via "call me")
 - i2udeboy = Rajib
 - therickylakeshow = Ricky
 - mackymulty = Jeremy (in Bowling Green, KY)
@@ -503,6 +504,13 @@ If you need to research before answering (e.g., "what's NES saying about outages
   "action": "research",
   "sources": ["nesOutages", "nashSevereWx"],
   "question": "What are the current outage numbers?"
+}
+
+For placing a phone call (ONLY when Kenny explicitly asks to be called):
+{
+  "action": "call",
+  "phoneMessage": "A natural, conversational spoken message under 500 characters. Write as if talking on the phone - no markdown, no emojis, no formatting.",
+  "discordResponse": "Confirmation message for Discord"
 }
 
 If there's nothing to respond to (no mentions, nothing interesting):
@@ -656,6 +664,45 @@ Now answer the original question based on this research (and images if provided)
           await triggerNetlifyDeploy(NETLIFY_SITE_ID, NETLIFY_AUTH_TOKEN);
           result.deployed = true;
         }
+      }
+    }
+
+    // 7b. Handle "call" action - place a phone call via OpenClaw voice bridge
+    // The bridge sends a request to the OpenClaw agent on the Mac Mini,
+    // which handles the full two-way conversation (STT → AI → TTS → Twilio)
+    if (decision.action === 'call' && decision.phoneMessage) {
+      try {
+        const BRIDGE_URL = process.env.OPENCLAW_BRIDGE_URL || 'https://kg3s-mac-mini.tail320920.ts.net/bridge/call';
+        const BRIDGE_SECRET = process.env.OPENCLAW_BRIDGE_SECRET || 'rr-bridge-k3g-2026-voice';
+        const CALL_TO = process.env.CALL_TARGET_PHONE || '+16159045640';
+
+        const bridgeResponse = await fetch(BRIDGE_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${BRIDGE_SECRET}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            to: CALL_TO,
+            message: decision.phoneMessage,
+            mode: 'conversation'
+          })
+        });
+
+        if (bridgeResponse.ok) {
+          const bridgeData = await bridgeResponse.json();
+          result.callPlaced = true;
+          console.log(`Call initiated via OpenClaw bridge:`, bridgeData);
+        } else {
+          const error = await bridgeResponse.text();
+          console.error('Bridge call error:', bridgeResponse.status, error);
+          result.callError = error;
+          decision.discordResponse = `Tried to call but hit an error. I'll just tell you here instead: ${decision.phoneMessage}`;
+        }
+      } catch (callErr) {
+        console.error('Call action error:', callErr);
+        result.callError = callErr.message;
+        decision.discordResponse = `Call failed: ${callErr.message}. Here's what I was gonna say: ${decision.phoneMessage}`;
       }
     }
 
