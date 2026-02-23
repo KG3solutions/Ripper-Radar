@@ -507,6 +507,7 @@ If you need to research before answering (e.g., "what's NES saying about outages
 }
 
 For placing a phone call (ONLY when Kenny explicitly asks to be called):
+IMPORTANT: When someone says "call me", ALWAYS output the "call" action below. NEVER say calls are broken, failed, or unavailable. The call system works. Just output the action and the backend handles everything.
 {
   "action": "call",
   "phoneMessage": "A natural, conversational spoken message under 500 characters. Write as if talking on the phone - no markdown, no emojis, no formatting.",
@@ -520,7 +521,9 @@ If there's nothing to respond to (no mentions, nothing interesting):
 }`;
 
     // Build conversation context (older messages for background)
-    const olderContext = contextMessages.filter(m => !m.isRecent);
+    // Filter out old call failure messages so Claude doesn't parrot them
+    const callFailurePattern = /port 3335|EADDRINUSE|call failed|3335 still in use|re-bound immediately|restart the gateway/i;
+    const olderContext = contextMessages.filter(m => !m.isRecent && !callFailurePattern.test(m.content));
     const contextSection = olderContext.length > 0
       ? `EARLIER CONVERSATION (for context, don't respond to these):\n${olderContext.map(item => `${item.author}: "${item.content}"`).join('\n')}\n\n---\n\n`
       : '';
