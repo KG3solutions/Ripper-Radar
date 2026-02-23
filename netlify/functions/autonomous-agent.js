@@ -634,7 +634,22 @@ Now answer the original question based on this research (and images if provided)
       }
     }
 
-    // 7. Execute final decision
+    // 7. Force-detect "call me" requests - override Claude if it doesn't output a call action
+    // This handles cases where conversation history poisons Claude into thinking calls are broken
+    const latestMention = directMentions[directMentions.length - 1];
+    const callMePattern = /\bcall me\b/i;
+    if (latestMention && callMePattern.test(latestMention.content) && decision.action !== 'call') {
+      console.log('[OVERRIDE] User said "call me" but Claude output action:', decision.action, '— forcing call action');
+      // Extract a reasonable message from the user's request
+      const userContent = latestMention.content.replace(/<@[^>]+>/g, '').trim();
+      decision = {
+        action: 'call',
+        phoneMessage: `Hey Kenny, this is Ripper Radar calling. ${userContent.replace(/call me/i, '').replace(/about/i, 'About').trim() || 'You asked me to give you a ring.'}`,
+        discordResponse: `Calling you now! 📞`
+      };
+    }
+
+    // Execute final decision
     const result = {
       status: decision.action,
       feedbackProcessed: newMessages.length,
