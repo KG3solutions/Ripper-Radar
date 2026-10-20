@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "mcp__claude-mem__chroma_query_documents",
-      "mcp__claude-mem__chroma_add_documents"
+      "mcp__claude-mem__chroma_add_documents",
+      "Bash(npm run build:*)"
     ]
   }
 }

@@ -1,2 +1,5 @@
 # Generator Share SPA fallback
+# Exact match for /generator-share (no trailing slash)
+/generator-share  /generator-share/index.html  200
+# All sub-paths
 /generator-share/*  /generator-share/index.html  200
